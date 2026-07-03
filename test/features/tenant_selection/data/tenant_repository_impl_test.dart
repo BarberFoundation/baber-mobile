@@ -43,4 +43,34 @@ void main() {
     expect(result.isLeft(), isTrue);
     result.fold((failure) => expect(failure, isA<NetworkFailure>()), (_) => fail('expected left'));
   });
+
+  test('findBySlug returns ApiFailure with extracted message on 404', () async {
+    when(() => dio.get('/tenants/unknown')).thenThrow(
+      DioException(
+        requestOptions: RequestOptions(path: '/tenants/unknown'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/tenants/unknown'),
+          statusCode: 404,
+          data: {
+            'message': 'Tenant não encontrado.',
+            'statusCode': 404,
+            'error': 'NOT_FOUND',
+          },
+        ),
+      ),
+    );
+
+    final result = await repository.findBySlug('unknown');
+
+    expect(result.isLeft(), isTrue);
+    result.fold(
+      (failure) {
+        expect(failure, isA<ApiFailure>());
+        final apiFailure = failure as ApiFailure;
+        expect(apiFailure.statusCode, 404);
+        expect(apiFailure.message, 'Tenant não encontrado.');
+      },
+      (_) => fail('expected left'),
+    );
+  });
 }

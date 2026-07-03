@@ -34,6 +34,8 @@ class TenantRepositoryImpl implements TenantRepository {
   Failure _mapError(DioException e) {
     final statusCode = e.response?.statusCode;
     if (statusCode == null) return NetworkFailure(e.message ?? 'network error');
-    return ApiFailure(statusCode: statusCode, message: e.response?.data?.toString() ?? 'api error');
+    final data = e.response?.data;
+    final message = (data is Map) ? (data['message']?.toString() ?? 'api error') : 'api error';
+    return ApiFailure(statusCode: statusCode, message: message);
   }
 }
