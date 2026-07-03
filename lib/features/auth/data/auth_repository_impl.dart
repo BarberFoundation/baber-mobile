@@ -13,6 +13,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, Unit>> requestOtp(String phone) async {
     try {
+      // Tenant is always selected before this screen is reachable.
       final tenantId = (await _tenantStorage.readTenantId())!;
       await _dio.post('/auth/otp/request', data: {'phone': phone, 'tenantId': tenantId});
       return const Right(unit);
@@ -24,6 +25,7 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AuthResult>> verifyOtp({required String phone, required String code}) async {
     try {
+      // Tenant is always selected before this screen is reachable.
       final tenantId = (await _tenantStorage.readTenantId())!;
       final response = await _dio.post(
         '/auth/otp/verify',
