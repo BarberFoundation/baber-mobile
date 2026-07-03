@@ -8,6 +8,7 @@ import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
 class MockTokenStorage extends Mock implements TokenStorage {}
 class MockTenantStorage extends Mock implements TenantStorage {}
 class MockDio extends Mock implements Dio {}
+class MockErrorHandler extends Mock implements ErrorInterceptorHandler {}
 
 void main() {
   late MockTokenStorage tokenStorage;
@@ -58,6 +59,49 @@ void main() {
       expect(isRefreshRequestPath('/auth/login'), isFalse);
       expect(isRefreshRequestPath('/auth/refreshx'), isFalse);
       expect(isRefreshRequestPath(''), isFalse);
+    });
+  });
+
+  group('authInterceptor.onError (recursion guard, wired through Dio)', () {
+    test('refresh-request failure clears tokens and does not recurse into _tryRefresh', () async {
+      when(() => tokenStorage.clear()).thenAnswer((_) async {});
+
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/refresh'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/auth/refresh'),
+          statusCode: 401,
+        ),
+      );
+      final handler = MockErrorHandler();
+
+      client.authInterceptor.onError(err, handler);
+      await untilCalled(() => handler.next(err));
+
+      verify(() => tokenStorage.clear()).called(1);
+      verifyNever(() => tokenStorage.readRefreshToken());
+      verify(() => handler.next(err)).called(1);
+    });
+
+    test('non-refresh-path 401 triggers _tryRefresh via readRefreshToken', () async {
+      when(() => tokenStorage.readRefreshToken()).thenAnswer((_) async => null);
+      when(() => tokenStorage.clear()).thenAnswer((_) async {});
+
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/appointments'),
+        response: Response(
+          requestOptions: RequestOptions(path: '/appointments'),
+          statusCode: 401,
+        ),
+      );
+      final handler = MockErrorHandler();
+
+      client.authInterceptor.onError(err, handler);
+      await untilCalled(() => handler.next(err));
+
+      verify(() => tokenStorage.readRefreshToken()).called(1);
+      verify(() => tokenStorage.clear()).called(1);
+      verify(() => handler.next(err)).called(1);
     });
   });
 }
