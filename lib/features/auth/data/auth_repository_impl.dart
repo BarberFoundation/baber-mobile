@@ -1,17 +1,20 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/tenancy/tenant_storage.dart';
 import '../domain/auth_repository.dart';
 import '../domain/auth_user.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final Dio _dio;
-  const AuthRepositoryImpl(this._dio);
+  final TenantStorage _tenantStorage;
+  const AuthRepositoryImpl(this._dio, this._tenantStorage);
 
   @override
   Future<Either<Failure, Unit>> requestOtp(String phone) async {
     try {
-      await _dio.post('/auth/otp/request', data: {'phone': phone});
+      final tenantId = (await _tenantStorage.readTenantId())!;
+      await _dio.post('/auth/otp/request', data: {'phone': phone, 'tenantId': tenantId});
       return const Right(unit);
     } on DioException catch (e) {
       return Left(_mapError(e));
@@ -21,7 +24,11 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<Either<Failure, AuthResult>> verifyOtp({required String phone, required String code}) async {
     try {
-      final response = await _dio.post('/auth/otp/verify', data: {'phone': phone, 'code': code});
+      final tenantId = (await _tenantStorage.readTenantId())!;
+      final response = await _dio.post(
+        '/auth/otp/verify',
+        data: {'phone': phone, 'code': code, 'tenantId': tenantId},
+      );
       return Right(AuthResult.fromJson(response.data as Map<String, dynamic>));
     } on DioException catch (e) {
       return Left(_mapError(e));

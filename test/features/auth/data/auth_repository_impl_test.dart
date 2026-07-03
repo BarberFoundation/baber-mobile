@@ -2,21 +2,26 @@ import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:baber_mobile/core/error/failure.dart';
+import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
 import 'package:baber_mobile/features/auth/data/auth_repository_impl.dart';
 
 class MockDio extends Mock implements Dio {}
+class MockTenantStorage extends Mock implements TenantStorage {}
 
 void main() {
   late MockDio dio;
+  late MockTenantStorage tenantStorage;
   late AuthRepositoryImpl repository;
 
   setUp(() {
     dio = MockDio();
-    repository = AuthRepositoryImpl(dio);
+    tenantStorage = MockTenantStorage();
+    when(() => tenantStorage.readTenantId()).thenAnswer((_) async => 't1');
+    repository = AuthRepositoryImpl(dio, tenantStorage);
   });
 
-  test('requestOtp posts phone and returns Right on 200/204', () async {
-    when(() => dio.post('/auth/otp/request', data: {'phone': '+5511999999999'}))
+  test('requestOtp posts phone + tenantId and returns Right on 200/204', () async {
+    when(() => dio.post('/auth/otp/request', data: {'phone': '+5511999999999', 'tenantId': 't1'}))
         .thenAnswer((_) async => Response(
               requestOptions: RequestOptions(path: '/auth/otp/request'),
               statusCode: 204,
@@ -28,7 +33,7 @@ void main() {
   });
 
   test('requestOtp maps 429 to ApiFailure', () async {
-    when(() => dio.post('/auth/otp/request', data: {'phone': '+5511999999999'}))
+    when(() => dio.post('/auth/otp/request', data: {'phone': '+5511999999999', 'tenantId': 't1'}))
         .thenThrow(DioException(
       requestOptions: RequestOptions(path: '/auth/otp/request'),
       response: Response(
@@ -49,8 +54,8 @@ void main() {
     );
   });
 
-  test('verifyOtp returns AuthUser with tokens on success', () async {
-    when(() => dio.post('/auth/otp/verify', data: {'phone': '+5511999999999', 'code': '123456'}))
+  test('verifyOtp posts phone + code + tenantId and returns AuthUser with tokens', () async {
+    when(() => dio.post('/auth/otp/verify', data: {'phone': '+5511999999999', 'code': '123456', 'tenantId': 't1'}))
         .thenAnswer((_) async => Response(
               requestOptions: RequestOptions(path: '/auth/otp/verify'),
               statusCode: 200,
