@@ -29,4 +29,13 @@ void main() {
 
     expect(await tenantStorage.readTenantId(), 't1');
   });
+
+  test('clear deletes id and slug', () async {
+    when(() => storage.delete(key: any(named: 'key'))).thenAnswer((_) async {});
+
+    await tenantStorage.clear();
+
+    verify(() => storage.delete(key: 'tenant_id')).called(1);
+    verify(() => storage.delete(key: 'tenant_slug')).called(1);
+  });
 }

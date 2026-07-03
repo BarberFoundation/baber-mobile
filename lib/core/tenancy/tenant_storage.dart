@@ -14,4 +14,9 @@ class TenantStorage {
 
   Future<String?> readTenantId() => _storage.read(key: _idKey);
   Future<String?> readTenantSlug() => _storage.read(key: _slugKey);
+
+  Future<void> clear() async {
+    await _storage.delete(key: _idKey);
+    await _storage.delete(key: _slugKey);
+  }
 }
