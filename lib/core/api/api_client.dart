@@ -2,6 +2,13 @@ import 'package:dio/dio.dart';
 import '../auth/token_storage.dart';
 import '../tenancy/tenant_storage.dart';
 
+/// Returns true if [path] is the token-refresh endpoint's request path.
+///
+/// Extracted as a standalone function so the recursion guard in
+/// [ApiClient]'s `authInterceptor` `onError` handler can be unit tested
+/// in isolation, without needing to simulate Dio's interceptor pipeline.
+bool isRefreshRequestPath(String path) => path == '/auth/refresh';
+
 class ApiClient {
   final Dio dio;
   final TokenStorage tokenStorage;
@@ -20,7 +27,18 @@ class ApiClient {
         handler.next(options);
       },
       onError: (error, handler) async {
-        if (error.response?.statusCode == 401) {
+        // Guard against infinite recursion: the /auth/refresh call itself
+        // goes through this same Dio instance (and thus this same
+        // interceptor). If the refresh token is expired/revoked, that
+        // request will also fail with a 401, which would otherwise
+        // re-enter this handler and call _tryRefresh() again, forever.
+        // Any failure of the refresh request itself (401 or otherwise,
+        // e.g. a network error) is treated as "refresh failed": clear
+        // tokens once and propagate the error without recursing.
+        final isRefreshRequest = isRefreshRequestPath(error.requestOptions.path);
+        if (isRefreshRequest) {
+          await tokenStorage.clear();
+        } else if (error.response?.statusCode == 401) {
           final refreshed = await _tryRefresh();
           if (refreshed) {
             final headers = await buildAuthHeaders();

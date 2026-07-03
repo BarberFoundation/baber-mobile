@@ -37,4 +37,27 @@ void main() {
     expect(result['Authorization'], 'Bearer abc');
     expect(result['X-Tenant-Id'], 't1');
   });
+
+  group('isRefreshRequestPath (recursion guard)', () {
+    // Directly exercising Dio's onError pipeline to prove "no infinite
+    // recursion" is awkward: the recursive call is internal to the
+    // interceptor and Dio does not expose hooks to count re-entrant
+    // invocations without a much heavier fake HTTP adapter setup. Instead,
+    // the "is this the refresh request" predicate that the onError guard
+    // relies on (see authInterceptor's onError in api_client.dart) is
+    // extracted into the standalone isRefreshRequestPath function and
+    // unit tested here in isolation. This directly proves the condition
+    // that prevents a 401 from /auth/refresh from re-triggering
+    // _tryRefresh(), which is what stops the unbounded recursion.
+    test('returns true for the refresh endpoint path', () {
+      expect(isRefreshRequestPath('/auth/refresh'), isTrue);
+    });
+
+    test('returns false for other request paths, including 401-prone ones', () {
+      expect(isRefreshRequestPath('/appointments'), isFalse);
+      expect(isRefreshRequestPath('/auth/login'), isFalse);
+      expect(isRefreshRequestPath('/auth/refreshx'), isFalse);
+      expect(isRefreshRequestPath(''), isFalse);
+    });
+  });
 }
