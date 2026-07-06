@@ -1,30 +1,41 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:baber_mobile/baber_app.dart';
+import 'package:baber_mobile/core/auth/token_storage.dart';
+import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
+import 'package:app_links/app_links.dart';
+import 'package:mocktail/mocktail.dart';
+import 'package:baber_mobile/features/auth/domain/auth_repository.dart';
+import 'package:baber_mobile/features/tenant_selection/domain/tenant.dart';
+import 'package:baber_mobile/features/tenant_selection/domain/tenant_repository.dart';
 
-import 'package:baber_mobile/main.dart';
+class MockTokenStorage extends Mock implements TokenStorage {}
+class MockTenantStorage extends Mock implements TenantStorage {}
+class MockAuthRepository extends Mock implements AuthRepository {}
+class MockTenantRepository extends Mock implements TenantRepository {}
+class MockAppLinks extends Mock implements AppLinks {}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('app boots to tenant selection when no session or deep link is stored', (tester) async {
+    final tokenStorage = MockTokenStorage();
+    final tenantStorage = MockTenantStorage();
+    final tenantRepository = MockTenantRepository();
+    final appLinks = MockAppLinks();
+    when(() => tenantStorage.readTenantId()).thenAnswer((_) async => null);
+    when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => null);
+    when(() => appLinks.getInitialLink()).thenAnswer((_) async => null);
+    // TenantSelectionScreen dispatches LoadTenants on mount.
+    when(() => tenantRepository.listTenants()).thenAnswer((_) async => const Right(<Tenant>[]));
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+    await tester.pumpWidget(BaberApp(
+      tokenStorage: tokenStorage,
+      tenantStorage: tenantStorage,
+      authRepository: MockAuthRepository(),
+      tenantRepository: tenantRepository,
+      appLinks: appLinks,
+    ));
+    await tester.pumpAndSettle();
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
-
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    expect(find.text('Escolha a barbearia'), findsOneWidget);
   });
 }
