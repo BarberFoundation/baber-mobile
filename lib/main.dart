@@ -12,8 +12,11 @@ void main() {
   const storage = FlutterSecureStorage();
   final tokenStorage = TokenStorage(storage);
   final tenantStorage = TenantStorage(storage);
+  // API_BASE_URL is the host only; the backend serves everything (except
+  // /health) under the global "api" prefix with URI versioning (v1).
+  const apiHost = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
   final apiClient = ApiClient(
-    baseUrl: const String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000'),
+    baseUrl: '$apiHost/api/v1',
     tokenStorage: tokenStorage,
     tenantStorage: tenantStorage,
   );
