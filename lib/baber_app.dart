@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'core/auth/token_storage.dart';
 import 'core/router/app_router.dart';
 import 'core/tenancy/tenant_storage.dart';
+import 'features/appointments/domain/appointment_repository.dart';
 import 'features/auth/domain/auth_repository.dart';
 import 'features/booking/domain/booking_repository.dart';
 import 'features/catalog/domain/service_repository.dart';
@@ -17,6 +18,7 @@ class BaberApp extends StatelessWidget {
   final TenantRepository tenantRepository;
   final ServiceRepository serviceRepository;
   final BookingRepository bookingRepository;
+  final AppointmentRepository appointmentRepository;
   final Dio dio;
   final AppLinks appLinks;
 
@@ -28,6 +30,7 @@ class BaberApp extends StatelessWidget {
     required this.tenantRepository,
     required this.serviceRepository,
     required this.bookingRepository,
+    required this.appointmentRepository,
     required this.dio,
     required this.appLinks,
   });
@@ -41,6 +44,7 @@ class BaberApp extends StatelessWidget {
       tenantRepository: tenantRepository,
       serviceRepository: serviceRepository,
       bookingRepository: bookingRepository,
+      appointmentRepository: appointmentRepository,
       dio: dio,
       appLinks: appLinks,
     );

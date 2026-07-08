@@ -10,6 +10,9 @@ import '../../features/auth/presentation/auth_bloc.dart';
 import '../../features/auth/presentation/name_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
 import '../../features/auth/presentation/phone_screen.dart';
+import '../../features/appointments/domain/appointment_repository.dart';
+import '../../features/appointments/presentation/my_appointments_bloc.dart';
+import '../../features/appointments/presentation/my_appointments_screen.dart';
 import '../../features/booking/domain/booking_repository.dart';
 import '../../features/booking/presentation/booking_bloc.dart';
 import '../../features/booking/presentation/booking_success_screen.dart';
@@ -34,6 +37,7 @@ GoRouter buildAppRouter({
   required TenantRepository tenantRepository,
   required ServiceRepository serviceRepository,
   required BookingRepository bookingRepository,
+  required AppointmentRepository appointmentRepository,
   required Dio dio,
   required AppLinks appLinks,
 }) {
@@ -75,6 +79,16 @@ GoRouter buildAppRouter({
           tokenStorage: tokenStorage,
           tenantStorage: tenantStorage,
           userName: state.extra as String?,
+        ),
+      ),
+      GoRoute(
+        path: '/appointments',
+        builder: (context, state) => BlocProvider(
+          create: (_) => MyAppointmentsBloc(
+            appointmentRepository: appointmentRepository,
+            serviceRepository: serviceRepository,
+          ),
+          child: const MyAppointmentsScreen(),
         ),
       ),
       GoRoute(
