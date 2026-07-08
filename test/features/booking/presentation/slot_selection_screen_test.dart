@@ -35,9 +35,9 @@ void main() {
           routes: [
             GoRoute(
               path: '/',
-              builder: (_, __) => BlocProvider<BookingBloc>.value(value: bloc, child: child),
+              builder: (context, state) => BlocProvider<BookingBloc>.value(value: bloc, child: child),
             ),
-            GoRoute(path: '/booking/confirm', builder: (_, __) => const SizedBox()),
+            GoRoute(path: '/booking/confirm', builder: (context, state) => const SizedBox()),
           ],
         ),
       );
