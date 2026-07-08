@@ -8,6 +8,7 @@ import 'features/appointments/domain/appointment_repository.dart';
 import 'features/auth/domain/auth_repository.dart';
 import 'features/booking/domain/booking_repository.dart';
 import 'features/catalog/domain/service_repository.dart';
+import 'features/notifications/domain/notifications_repository.dart';
 import 'features/tenant_selection/domain/tenant_repository.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -19,6 +20,7 @@ class BaberApp extends StatelessWidget {
   final ServiceRepository serviceRepository;
   final BookingRepository bookingRepository;
   final AppointmentRepository appointmentRepository;
+  final NotificationsRepository notificationsRepository;
   final Dio dio;
   final AppLinks appLinks;
 
@@ -31,6 +33,7 @@ class BaberApp extends StatelessWidget {
     required this.serviceRepository,
     required this.bookingRepository,
     required this.appointmentRepository,
+    required this.notificationsRepository,
     required this.dio,
     required this.appLinks,
   });
@@ -45,6 +48,7 @@ class BaberApp extends StatelessWidget {
       serviceRepository: serviceRepository,
       bookingRepository: bookingRepository,
       appointmentRepository: appointmentRepository,
+      notificationsRepository: notificationsRepository,
       dio: dio,
       appLinks: appLinks,
     );

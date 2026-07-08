@@ -9,6 +9,7 @@ import 'features/appointments/data/appointment_repository_impl.dart';
 import 'features/auth/data/auth_repository_impl.dart';
 import 'features/booking/data/booking_repository_impl.dart';
 import 'features/catalog/data/service_repository_impl.dart';
+import 'features/notifications/data/notifications_repository_impl.dart';
 import 'features/tenant_selection/data/tenant_repository_impl.dart';
 
 void main() {
@@ -28,6 +29,7 @@ void main() {
   final serviceRepository = ServiceRepositoryImpl(apiClient.dio);
   final bookingRepository = BookingRepositoryImpl(apiClient.dio);
   final appointmentRepository = AppointmentRepositoryImpl(apiClient.dio);
+  final notificationsRepository = NotificationsRepositoryImpl(apiClient.dio);
 
   runApp(BaberApp(
     tokenStorage: tokenStorage,
@@ -37,6 +39,7 @@ void main() {
     serviceRepository: serviceRepository,
     bookingRepository: bookingRepository,
     appointmentRepository: appointmentRepository,
+    notificationsRepository: notificationsRepository,
     dio: apiClient.dio,
     appLinks: AppLinks(),
   ));

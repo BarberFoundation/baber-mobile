@@ -23,12 +23,17 @@ import '../../features/catalog/domain/service.dart';
 import '../../features/catalog/domain/service_repository.dart';
 import '../../features/catalog/presentation/services_bloc.dart';
 import '../../features/catalog/presentation/services_list_screen.dart';
+import '../../features/home/presentation/home_bloc.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/notifications/domain/notifications_repository.dart';
+import '../../features/notifications/presentation/notifications_bloc.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/splash/presentation/initial_route_resolver.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/tenant_selection/domain/tenant_repository.dart';
 import '../../features/tenant_selection/presentation/tenant_selection_bloc.dart';
 import '../../features/tenant_selection/presentation/tenant_selection_screen.dart';
+import '../../shared/widgets/main_shell.dart';
 
 GoRouter buildAppRouter({
   required TokenStorage tokenStorage,
@@ -38,6 +43,7 @@ GoRouter buildAppRouter({
   required ServiceRepository serviceRepository,
   required BookingRepository bookingRepository,
   required AppointmentRepository appointmentRepository,
+  required NotificationsRepository notificationsRepository,
   required Dio dio,
   required AppLinks appLinks,
 }) {
@@ -73,23 +79,44 @@ GoRouter buildAppRouter({
           GoRoute(path: '/name', builder: (context, state) => const NameScreen()),
         ],
       ),
-      GoRoute(
-        path: '/home',
-        builder: (context, state) => HomeScreen(
-          tokenStorage: tokenStorage,
-          tenantStorage: tenantStorage,
-          userName: state.extra as String?,
-        ),
-      ),
-      GoRoute(
-        path: '/appointments',
-        builder: (context, state) => BlocProvider(
-          create: (_) => MyAppointmentsBloc(
-            appointmentRepository: appointmentRepository,
-            serviceRepository: serviceRepository,
-          ),
-          child: const MyAppointmentsScreen(),
-        ),
+      StatefulShellRoute.indexedStack(
+        builder: (context, state, navigationShell) => MainShell(navigationShell: navigationShell),
+        branches: [
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/home',
+              builder: (context, state) => BlocProvider(
+                create: (_) => HomeBloc(
+                  dio: dio,
+                  appointmentRepository: appointmentRepository,
+                  serviceRepository: serviceRepository,
+                ),
+                child: HomeScreen(tokenStorage: tokenStorage, tenantStorage: tenantStorage),
+              ),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/appointments',
+              builder: (context, state) => BlocProvider(
+                create: (_) => MyAppointmentsBloc(
+                  appointmentRepository: appointmentRepository,
+                  serviceRepository: serviceRepository,
+                ),
+                child: const MyAppointmentsScreen(),
+              ),
+            ),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
+              path: '/notifications',
+              builder: (context, state) => BlocProvider(
+                create: (_) => NotificationsBloc(repository: notificationsRepository),
+                child: const NotificationsScreen(),
+              ),
+            ),
+          ]),
+        ],
       ),
       GoRoute(
         path: '/services',
