@@ -12,6 +12,8 @@ jobs:
   prepare:
     name: Prepare version info
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     outputs:
       app_name: ${{ steps.info.outputs.app_name }}
       version: ${{ steps.info.outputs.version }}
