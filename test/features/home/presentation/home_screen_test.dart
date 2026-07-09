@@ -67,7 +67,8 @@ void main() {
 
     await pumpHome(tester);
 
-    expect(find.text('Bem-vindo, João'), findsOneWidget);
+    expect(find.text('Bem-vindo,'), findsOneWidget);
+    expect(find.text('João'), findsOneWidget);
   });
 
   testWidgets('renders next appointment card when present', (tester) async {
@@ -101,6 +102,8 @@ void main() {
 
     await pumpHome(tester);
     await tester.tap(find.byIcon(Icons.logout));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Sair'));
     await tester.pumpAndSettle();
 
     verify(() => tokenStorage.clear()).called(1);

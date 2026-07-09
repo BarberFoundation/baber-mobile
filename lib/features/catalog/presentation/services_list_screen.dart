@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/barber_app_bar.dart';
 import 'services_bloc.dart';
 import 'services_event.dart';
 import 'services_state.dart';
@@ -22,7 +24,7 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Serviços')),
+      appBar: const BarberAppBar(title: 'Serviços'),
       body: BlocConsumer<ServicesBloc, ServicesState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
@@ -36,14 +38,51 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final services = state.services ?? [];
-          return ListView.builder(
+          if (services.isEmpty) {
+            return Center(
+              child: Text(
+                'Nenhum serviço disponível no momento.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+              ),
+            );
+          }
+          return ListView.separated(
+            padding: const EdgeInsets.all(20),
             itemCount: services.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final service = services[index];
-              return ListTile(
-                title: Text(service.name),
-                subtitle: Text('${service.durationMinutes} min · ${service.formattedPrice}'),
-                onTap: () => context.push('/booking/date', extra: service),
+              return Card(
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => context.push('/booking/date', extra: service),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(service.name, style: Theme.of(context).textTheme.titleMedium),
+                              const SizedBox(height: 4),
+                              Text(
+                                '${service.durationMinutes} min',
+                                style: Theme.of(context).textTheme.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Text(
+                          service.formattedPrice,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.brass),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.chevron_right, color: AppColors.steel),
+                      ],
+                    ),
+                  ),
+                ),
               );
             },
           );

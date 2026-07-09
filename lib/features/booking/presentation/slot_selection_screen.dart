@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/barber_app_bar.dart';
 import 'booking_bloc.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
@@ -11,7 +13,7 @@ class SlotSelectionScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Escolha o horário')),
+      appBar: const BarberAppBar(title: 'Escolha o horário'),
       body: BlocBuilder<BookingBloc, BookingState>(
         builder: (context, state) {
           if (state.isLoading) {
@@ -19,11 +21,21 @@ class SlotSelectionScreen extends StatelessWidget {
           }
           final slots = state.slots ?? [];
           if (slots.isEmpty) {
-            return const Center(child: Text('Nenhum horário disponível nesta data.'));
+            return Center(
+              child: Text(
+                'Nenhum horário disponível nesta data.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+              ),
+            );
           }
           return GridView.builder(
-            padding: const EdgeInsets.all(16),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 3),
+            padding: const EdgeInsets.all(20),
+            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: 3,
+              mainAxisSpacing: 12,
+              crossAxisSpacing: 12,
+              childAspectRatio: 2.2,
+            ),
             itemCount: slots.length,
             itemBuilder: (context, index) {
               final slot = slots[index];

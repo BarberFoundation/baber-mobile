@@ -19,8 +19,18 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _onLoad(LoadHome event, Emitter<HomeState> emit) async {
     emit(const HomeState(isLoading: true));
 
-    final profileResponse = await dio.get('/me');
-    final userName = (profileResponse.data as Map<String, dynamic>)['name'] as String?;
+    String? userName;
+    try {
+      final profileResponse = await dio.get('/me');
+      userName = (profileResponse.data as Map<String, dynamic>)['name'] as String?;
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 401) {
+        emit(const HomeState(sessionExpired: true));
+        return;
+      }
+      // Non-auth failure (e.g. network blip): keep going without a name
+      // rather than blocking the whole dashboard on this one call.
+    }
 
     final appointmentsResult = await appointmentRepository.listMine();
     final servicesResult = await serviceRepository.listServices();

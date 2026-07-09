@@ -135,13 +135,18 @@ GoRouter buildAppRouter({
           GoRoute(path: '/booking/slots', builder: (context, state) => const SlotSelectionScreen()),
           GoRoute(
             path: '/booking/confirm',
-            builder: (context, state) => FutureBuilder<Response>(
-              future: dio.get('/me'),
+            builder: (context, state) => FutureBuilder<Map<String, dynamic>>(
+              // Best-effort prefill: if the profile fetch fails for any reason
+              // (expired session, network blip), fall back to empty fields
+              // rather than crashing the booking flow — the user can still
+              // type name/phone by hand, and a truly dead session will
+              // surface clearly when BookingConfirmed itself fails.
+              future: dio.get('/me').then((r) => r.data as Map<String, dynamic>).catchError((_) => <String, dynamic>{}),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Scaffold(body: Center(child: CircularProgressIndicator()));
                 }
-                final data = snapshot.data!.data as Map<String, dynamic>;
+                final data = snapshot.data!;
                 return ConfirmBookingScreen(
                   initialName: (data['name'] as String?) ?? '',
                   initialPhone: (data['phone'] as String?) ?? '',

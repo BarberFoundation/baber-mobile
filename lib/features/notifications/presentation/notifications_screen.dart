@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/relative_time.dart';
+import '../../../shared/widgets/barber_app_bar.dart';
 import '../domain/notification_item.dart';
 import 'notifications_bloc.dart';
 import 'notifications_event.dart';
@@ -31,10 +33,21 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     }
   }
 
+  Color _colorFor(NotificationItemType type) {
+    switch (type) {
+      case NotificationItemType.confirmation:
+        return const Color(0xFF6FA37A);
+      case NotificationItemType.cancellation:
+        return AppColors.barberRed;
+      case NotificationItemType.reminder:
+        return AppColors.brass;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Notificações')),
+      appBar: const BarberAppBar(title: 'Notificações'),
       body: BlocConsumer<NotificationsBloc, NotificationsState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
@@ -49,16 +62,51 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           }
           final items = state.items ?? [];
           if (items.isEmpty) {
-            return const Center(child: Text('Nenhuma notificação ainda.'));
+            return Center(
+              child: Text(
+                'Nenhuma notificação ainda.',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+              ),
+            );
           }
-          return ListView.builder(
+          return ListView.separated(
+            padding: const EdgeInsets.all(20),
             itemCount: items.length,
+            separatorBuilder: (context, index) => const SizedBox(height: 12),
             itemBuilder: (context, index) {
               final item = items[index];
-              return ListTile(
-                leading: Icon(_iconFor(item.type)),
-                title: Text(item.message),
-                subtitle: Text(relativeTime(item.createdAt)),
+              final color = _colorFor(item.type);
+              return Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.14),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(_iconFor(item.type), color: color, size: 20),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(item.message, style: Theme.of(context).textTheme.bodyMedium),
+                            const SizedBox(height: 4),
+                            Text(
+                              relativeTime(item.createdAt),
+                              style: Theme.of(context).textTheme.bodySmall,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               );
             },
           );

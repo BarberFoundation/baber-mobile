@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/stripe_bar.dart';
 import 'initial_route_resolver.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -25,8 +27,19 @@ class _SplashScreenState extends State<SplashScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
-      body: Center(child: CircularProgressIndicator()),
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.content_cut, color: AppColors.brass, size: 40),
+            const SizedBox(height: 16),
+            const SizedBox(width: 72, child: StripeBar(height: 4)),
+            const SizedBox(height: 24),
+            const CircularProgressIndicator(color: AppColors.brass),
+          ],
+        ),
+      ),
     );
   }
 }

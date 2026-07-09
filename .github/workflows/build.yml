@@ -1,0 +1,166 @@
+name: Build iOS IPA & Android APK
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  prepare:
+    name: Prepare version info
+    runs-on: ubuntu-latest
+    outputs:
+      app_name: ${{ steps.info.outputs.app_name }}
+      version: ${{ steps.info.outputs.version }}
+      tag: ${{ steps.info.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Extract app info from pubspec.yaml
+        id: info
+        run: |
+          APP_NAME=$(grep '^name:' pubspec.yaml | awk '{print $2}')
+          VERSION=$(grep '^version:' pubspec.yaml | head -1 | awk '{print $2}' | cut -d'+' -f1)
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          echo "app_name=${APP_NAME}" >> $GITHUB_OUTPUT
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tag=v${VERSION}-${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+  build-ios:
+    name: iOS Build
+    needs: prepare
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    env:
+      APP_NAME: ${{ needs.prepare.outputs.app_name }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          architecture: x64
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test
+        run: flutter test
+
+      - name: Cache CocoaPods
+        uses: actions/cache@v4
+        with:
+          path: |
+            ios/Pods
+            ~/Library/Caches/CocoaPods
+            ~/.cocoapods
+          key: ${{ runner.os }}-pods-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pods-
+
+      - name: Setup CocoaPods
+        timeout-minutes: 15
+        run: cd ios && pod install --repo-update
+
+      - name: Build iOS
+        run: flutter build ios --release --no-codesign --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+
+      - name: Create IPA
+        run: |
+          cd build/ios/iphoneos
+          mkdir -p Payload
+          mv Runner.app Payload/
+          zip -qq -r -9 "${APP_NAME}-${VERSION}.ipa" Payload
+          echo "IPA size: $(du -sh "${APP_NAME}-${VERSION}.ipa" | cut -f1)"
+
+      - name: Upload IPA to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/ios/iphoneos/${{ env.APP_NAME }}-${{ env.VERSION }}.ipa
+          tag: ${{ env.TAG }}
+          overwrite: true
+          body: |
+            **Versão:** ${{ env.VERSION }}
+            **Commit:** ${{ github.sha }}
+            **Branch:** ${{ github.ref_name }}
+
+  build-android:
+    name: Android Build
+    needs: prepare
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      APP_NAME: ${{ needs.prepare.outputs.app_name }}
+      VERSION: ${{ needs.prepare.outputs.version }}
+      TAG: ${{ needs.prepare.outputs.tag }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+          architecture: x64
+
+      - name: Cache pub dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.pub-cache
+            .dart_tool
+          key: ${{ runner.os }}-pub-${{ hashFiles('**/pubspec.lock') }}
+          restore-keys: ${{ runner.os }}-pub-
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --dart-define=API_BASE_URL=${{ secrets.API_BASE_URL }}
+
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/${APP_NAME}-${VERSION}.apk
+          echo "APK size: $(du -sh "build/app/outputs/flutter-apk/${APP_NAME}-${VERSION}.apk" | cut -f1)"
+
+      - name: Upload APK to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/app/outputs/flutter-apk/${{ env.APP_NAME }}-${{ env.VERSION }}.apk
+          tag: ${{ env.TAG }}
+          overwrite: true
+          body: |
+            **Versão:** ${{ env.VERSION }}
+            **Commit:** ${{ github.sha }}
+            **Branch:** ${{ github.ref_name }}

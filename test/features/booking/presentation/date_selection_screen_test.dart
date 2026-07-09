@@ -41,8 +41,8 @@ void main() {
       );
 
   testWidgets('renders 30 selectable upcoming days', (tester) async {
-    // Enlarge the test surface so all 30 ListTiles are laid out simultaneously;
-    // ListView.builder only builds items within the viewport, and 30 tiles
+    // Enlarge the test surface so all 30 day cards are laid out simultaneously;
+    // ListView.separated only builds items within the viewport, and 30 cards
     // don't fit in the default 800x600 test surface.
     await tester.binding.setSurfaceSize(const Size(800, 3000));
     addTearDown(() => tester.binding.setSurfaceSize(null));
@@ -51,14 +51,14 @@ void main() {
 
     await tester.pumpWidget(wrap(const DateSelectionScreen()));
 
-    expect(find.byType(ListTile), findsNWidgets(30));
+    expect(find.byType(Card), findsNWidgets(30));
   });
 
   testWidgets('tapping a day dispatches DateSelected', (tester) async {
     whenListen(bloc, const Stream<BookingState>.empty(), initialState: const BookingState(service: service));
 
     await tester.pumpWidget(wrap(const DateSelectionScreen()));
-    await tester.tap(find.byType(ListTile).first);
+    await tester.tap(find.byType(InkWell).first);
     await tester.pumpAndSettle();
 
     verify(() => bloc.add(any(that: isA<DateSelected>()))).called(1);

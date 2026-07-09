@@ -42,6 +42,7 @@ dependencies:
   flutter_secure_storage: ^9.2.2
   app_links: ^6.3.2
   dartz: ^0.10.1
+  google_fonts: ^6.2.1
 
 dev_dependencies:
   flutter_test:

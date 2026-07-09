@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/barber_app_bar.dart';
+import '../../../shared/widgets/status_pill.dart';
 import '../domain/appointment.dart';
 import 'my_appointments_bloc.dart';
 import 'my_appointments_event.dart';
@@ -22,13 +25,26 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
   Color _statusColor(AppointmentStatus status) {
     switch (status) {
       case AppointmentStatus.pending:
-        return Colors.amber;
+        return AppColors.brass;
       case AppointmentStatus.confirmed:
-        return Colors.green;
+        return const Color(0xFF6FA37A);
       case AppointmentStatus.completed:
-        return Colors.grey;
+        return AppColors.steel;
       case AppointmentStatus.cancelled:
-        return Colors.red;
+        return AppColors.barberRed;
+    }
+  }
+
+  String _statusLabel(AppointmentStatus status) {
+    switch (status) {
+      case AppointmentStatus.pending:
+        return 'PENDENTE';
+      case AppointmentStatus.confirmed:
+        return 'CONFIRMADO';
+      case AppointmentStatus.completed:
+        return 'CONCLUÍDO';
+      case AppointmentStatus.cancelled:
+        return 'CANCELADO';
     }
   }
 
@@ -51,23 +67,54 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
 
   Widget _buildItem(BuildContext context, Appointment appointment, Map<String, String> serviceNames) {
     final serviceName = serviceNames[appointment.serviceId] ?? appointment.serviceId;
-    return ListTile(
-      title: Text(serviceName),
-      subtitle: Text('${appointment.date} ${appointment.startTime}'),
-      leading: CircleAvatar(backgroundColor: _statusColor(appointment.status), radius: 6),
-      trailing: appointment.isCancellable
-          ? TextButton(
-              onPressed: () => _confirmCancel(context, appointment.id),
-              child: const Text('Cancelar'),
-            )
-          : null,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(serviceName, style: Theme.of(context).textTheme.titleMedium),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${appointment.date} · ${appointment.startTime}',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: 8),
+                    StatusPill(label: _statusLabel(appointment.status), color: _statusColor(appointment.status)),
+                  ],
+                ),
+              ),
+              if (appointment.isCancellable)
+                TextButton(
+                  onPressed: () => _confirmCancel(context, appointment.id),
+                  child: const Text('Cancelar'),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _sectionHeader(BuildContext context, String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12, top: 4),
+      child: Text(
+        label,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(letterSpacing: 1.2),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Minhas Consultas')),
+      appBar: const BarberAppBar(title: 'Minhas Consultas'),
       body: BlocConsumer<MyAppointmentsBloc, MyAppointmentsState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
@@ -89,13 +136,51 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
               .toList();
           final history = appointments.where((a) => !upcoming.contains(a)).toList();
 
+          if (appointments.isEmpty) {
+            return RefreshIndicator(
+              color: AppColors.brass,
+              backgroundColor: AppColors.surfaceHigh,
+              onRefresh: () async => context.read<MyAppointmentsBloc>().add(LoadMyAppointments()),
+              child: ListView(
+                children: [
+                  SizedBox(
+                    height: 400,
+                    child: Center(
+                      child: Text(
+                        'Você ainda não tem consultas.',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+
           return RefreshIndicator(
+            color: AppColors.brass,
+            backgroundColor: AppColors.surfaceHigh,
             onRefresh: () async => context.read<MyAppointmentsBloc>().add(LoadMyAppointments()),
             child: ListView(
+              padding: const EdgeInsets.all(20),
               children: [
-                const Padding(padding: EdgeInsets.all(16), child: Text('Próximas', style: TextStyle(fontWeight: FontWeight.bold))),
+                _sectionHeader(context, 'Próximas'),
+                if (upcoming.isEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Text(
+                      'Nenhuma consulta agendada.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
                 ...upcoming.map((a) => _buildItem(context, a, state.serviceNames)),
-                const Padding(padding: EdgeInsets.all(16), child: Text('Histórico', style: TextStyle(fontWeight: FontWeight.bold))),
+                const SizedBox(height: 16),
+                _sectionHeader(context, 'Histórico'),
+                if (history.isEmpty)
+                  Text(
+                    'Nenhum histórico ainda.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
                 ...history.map((a) => _buildItem(context, a, state.serviceNames)),
               ],
             ),
