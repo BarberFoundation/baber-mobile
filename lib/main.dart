@@ -18,8 +18,6 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  // Requires lib/firebase_options.dart to be regenerated via `flutterfire
-  // configure` — the checked-in file is a placeholder (see its header).
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   const storage = FlutterSecureStorage();

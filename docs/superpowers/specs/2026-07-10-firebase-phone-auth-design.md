@@ -195,9 +195,9 @@ Future<void> main() async {
 
 ## Follow-up manual (fora do escopo deste agente)
 
-1. `flutterfire configure` — login CLI autenticado no mesmo projeto Firebase do web, gera `firebase_options.dart` + config nativa Android/iOS.
+1. ~~`flutterfire configure`~~ — feito. Projeto `baber-fundation` (mesmo do web), apps Android/iOS registrados, `lib/firebase_options.dart` gerado com valores reais, `android/app/google-services.json` + wiring do Gradle plugin adicionados.
 2. Habilitar Phone Auth no Firebase Console (se ainda não habilitado).
 3. Android: cadastrar SHA-1/SHA-256 do app no Firebase (necessário para SMS Retriever / auto-verificação).
-4. iOS: configurar APNs (Phone Auth no iOS depende de push silencioso para verificação).
+4. iOS: `flutterfire configure` não gerou `ios/Runner/GoogleService-Info.plist` (limitação do CLI rodando fora do macOS/sem Xcode). Precisa rodar `flutterfire configure --platforms=ios` (ou baixar manualmente pelo Firebase Console) numa máquina com Xcode, e então configurar APNs (Phone Auth no iOS depende de push silencioso para verificação).
 
-Sem esses passos, o app compila mas `Firebase.initializeApp()` falha em runtime — a mudança de código fica pronta e testada, mas não testável end-to-end em device real até a config nativa existir.
+Sem os passos 2–4, o app compila e `Firebase.initializeApp()` funciona (config Android real já presente), mas o fluxo de phone auth em si (SMS real, auto-verificação) só é testável end-to-end depois de habilitar Phone Auth no console e cadastrar SHA-1/SHA-256. iOS além disso precisa do plist gerado numa máquina com Xcode.

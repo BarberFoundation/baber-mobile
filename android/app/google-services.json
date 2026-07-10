@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "769611437366",
+    "project_id": "baber-fundation",
+    "storage_bucket": "baber-fundation.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:769611437366:android:383ab68bb8ab5c9e9f4f97",
+        "android_client_info": {
+          "package_name": "com.baber.baber_mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "769611437366-gqge2173n2o7fti9mn1594bqo89c13ji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4ZBQaM7lXGhPCT7mRsuhuM_cxpBSRiUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "769611437366-gqge2173n2o7fti9mn1594bqo89c13ji.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
