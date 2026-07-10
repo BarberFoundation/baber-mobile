@@ -5,5 +5,6 @@ String failureMessage(Failure failure) {
     NetworkFailure(:final message) => message,
     ApiFailure(:final message) => message,
     UnauthorizedFailure() => 'Sessão expirada.',
+    FirebaseAuthFailure(:final message) => message,
   };
 }

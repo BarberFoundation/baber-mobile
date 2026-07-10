@@ -3,7 +3,17 @@ import '../../../core/error/failure.dart';
 import 'auth_user.dart';
 
 abstract class AuthRepository {
-  Future<Either<Failure, Unit>> requestOtp(String phone);
-  Future<Either<Failure, AuthResult>> verifyOtp({required String phone, required String code});
+  Future<void> requestPhoneCode({
+    required String phone,
+    required void Function(String verificationId) onCodeSent,
+    required void Function(Either<Failure, AuthResult> result) onAutoVerified,
+    required void Function(Failure failure) onVerificationFailed,
+  });
+
+  Future<Either<Failure, AuthResult>> confirmPhoneCode({
+    required String verificationId,
+    required String smsCode,
+  });
+
   Future<Either<Failure, AuthUser>> updateName(String name);
 }

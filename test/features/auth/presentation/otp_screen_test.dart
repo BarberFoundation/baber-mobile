@@ -27,7 +27,7 @@ void main() {
       );
 
   testWidgets('tapping Confirmar dispatches CodeSubmitted with phone from state', (tester) async {
-    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.codeSent('+5511999999999'));
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'));
 
     await tester.pumpWidget(wrap(const OtpScreen()));
     await tester.enterText(find.byType(TextField), '123456');
@@ -37,7 +37,7 @@ void main() {
   });
 
   testWidgets('resend button starts disabled with 30s countdown', (tester) async {
-    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.codeSent('+5511999999999'));
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'));
 
     await tester.pumpWidget(wrap(const OtpScreen()));
 
@@ -45,7 +45,7 @@ void main() {
   });
 
   testWidgets('resend button enables after 30s and dispatches PhoneSubmitted on tap', (tester) async {
-    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.codeSent('+5511999999999'));
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'));
 
     await tester.pumpWidget(wrap(const OtpScreen()));
     await tester.pump(const Duration(seconds: 30));
@@ -61,7 +61,7 @@ void main() {
     whenListen(
       bloc,
       Stream.fromIterable([const AuthState.error('código inválido')]),
-      initialState: const AuthState.codeSent('+5511999999999'),
+      initialState: const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
     );
 
     await tester.pumpWidget(wrap(const OtpScreen()));

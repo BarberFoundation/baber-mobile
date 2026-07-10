@@ -27,3 +27,12 @@ class UnauthorizedFailure extends Failure {
   @override
   List<Object?> get props => [];
 }
+
+class FirebaseAuthFailure extends Failure {
+  final String code;
+  final String message;
+  const FirebaseAuthFailure({required this.code, required this.message});
+
+  @override
+  List<Object?> get props => [code, message];
+}

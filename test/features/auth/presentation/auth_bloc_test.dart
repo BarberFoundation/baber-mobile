@@ -28,22 +28,77 @@ void main() {
   });
 
   blocTest<AuthBloc, AuthState>(
-    'emits [codeSent] when PhoneSubmitted succeeds',
+    'emits [loading, codeSent] when PhoneSubmitted triggers onCodeSent from the repository',
     build: () {
-      when(() => repository.requestOtp('+5511999999999')).thenAnswer((_) async => const Right(unit));
+      when(() => repository.requestPhoneCode(
+            phone: '+5511999999999',
+            onCodeSent: any(named: 'onCodeSent'),
+            onAutoVerified: any(named: 'onAutoVerified'),
+            onVerificationFailed: any(named: 'onVerificationFailed'),
+          )).thenAnswer((invocation) async {
+        final onCodeSent = invocation.namedArguments[#onCodeSent] as void Function(String);
+        onCodeSent('ver-123');
+      });
       return AuthBloc(repository: repository, tokenStorage: tokenStorage);
     },
     act: (bloc) => bloc.add(const PhoneSubmitted('+5511999999999')),
     expect: () => [
       const AuthState.loading(),
-      const AuthState.codeSent('+5511999999999'),
+      const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
     ],
   );
 
   blocTest<AuthBloc, AuthState>(
-    'emits [needsName] when CodeSubmitted succeeds and user has no name',
+    'emits [loading, needsName] when PhoneSubmitted auto-verifies with a nameless user',
     build: () {
-      when(() => repository.verifyOtp(phone: '+5511999999999', code: '123456'))
+      when(() => repository.requestPhoneCode(
+            phone: '+5511999999999',
+            onCodeSent: any(named: 'onCodeSent'),
+            onAutoVerified: any(named: 'onAutoVerified'),
+            onVerificationFailed: any(named: 'onVerificationFailed'),
+          )).thenAnswer((invocation) async {
+        final onAutoVerified =
+            invocation.namedArguments[#onAutoVerified] as void Function(Either<Failure, AuthResult>);
+        onAutoVerified(const Right(authResult));
+      });
+      return AuthBloc(repository: repository, tokenStorage: tokenStorage);
+    },
+    act: (bloc) => bloc.add(const PhoneSubmitted('+5511999999999')),
+    expect: () => [
+      const AuthState.loading(),
+      const AuthState.needsName(userNeedsName),
+    ],
+    verify: (_) {
+      verify(() => tokenStorage.saveTokens(accessToken: 'a', refreshToken: 'r')).called(1);
+    },
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits [loading, error] when PhoneSubmitted reports a verification failure',
+    build: () {
+      when(() => repository.requestPhoneCode(
+            phone: '+5511999999999',
+            onCodeSent: any(named: 'onCodeSent'),
+            onAutoVerified: any(named: 'onAutoVerified'),
+            onVerificationFailed: any(named: 'onVerificationFailed'),
+          )).thenAnswer((invocation) async {
+        final onVerificationFailed = invocation.namedArguments[#onVerificationFailed] as void Function(Failure);
+        onVerificationFailed(const FirebaseAuthFailure(code: 'invalid-phone-number', message: 'Número inválido.'));
+      });
+      return AuthBloc(repository: repository, tokenStorage: tokenStorage);
+    },
+    act: (bloc) => bloc.add(const PhoneSubmitted('+5511999999999')),
+    expect: () => [
+      const AuthState.loading(),
+      const AuthState.error('Número inválido.'),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits [loading, needsName] when CodeSubmitted confirms the code with the stored verificationId',
+    seed: () => const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
+    build: () {
+      when(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '123456'))
           .thenAnswer((_) async => const Right(authResult));
       return AuthBloc(repository: repository, tokenStorage: tokenStorage);
     },
@@ -58,17 +113,18 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
-    'emits [error] with mapped message when CodeSubmitted fails with ApiFailure',
+    'emits [loading, error] with mapped message when CodeSubmitted fails',
+    seed: () => const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
     build: () {
-      when(() => repository.verifyOtp(phone: '+5511999999999', code: '000000')).thenAnswer(
-        (_) async => const Left(ApiFailure(statusCode: 400, message: 'invalid or expired code')),
+      when(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '000000')).thenAnswer(
+        (_) async => const Left(FirebaseAuthFailure(code: 'invalid-verification-code', message: 'Código inválido.')),
       );
       return AuthBloc(repository: repository, tokenStorage: tokenStorage);
     },
     act: (bloc) => bloc.add(const CodeSubmitted(phone: '+5511999999999', code: '000000')),
     expect: () => [
       const AuthState.loading(),
-      const AuthState.error('invalid or expired code'),
+      const AuthState.error('Código inválido.'),
     ],
   );
 

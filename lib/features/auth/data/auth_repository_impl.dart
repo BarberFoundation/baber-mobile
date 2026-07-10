@@ -1,39 +1,44 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/error/failure.dart';
+import '../../../core/firebase/firebase_auth_gateway.dart';
 import '../../../core/tenancy/tenant_storage.dart';
 import '../domain/auth_repository.dart';
 import '../domain/auth_user.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
+  final FirebaseAuthGateway _gateway;
   final Dio _dio;
   final TenantStorage _tenantStorage;
-  const AuthRepositoryImpl(this._dio, this._tenantStorage);
+  const AuthRepositoryImpl(this._gateway, this._dio, this._tenantStorage);
 
   @override
-  Future<Either<Failure, Unit>> requestOtp(String phone) async {
-    try {
-      // Tenant is always selected before this screen is reachable.
-      final tenantId = (await _tenantStorage.readTenantId())!;
-      await _dio.post('/auth/otp/request', data: {'phone': phone, 'tenantId': tenantId});
-      return const Right(unit);
-    } on DioException catch (e) {
-      return Left(_mapError(e));
-    }
+  Future<void> requestPhoneCode({
+    required String phone,
+    required void Function(String verificationId) onCodeSent,
+    required void Function(Either<Failure, AuthResult> result) onAutoVerified,
+    required void Function(Failure failure) onVerificationFailed,
+  }) {
+    return _gateway.verifyPhoneNumber(
+      phoneNumber: phone,
+      onCodeSent: onCodeSent,
+      onAutoVerified: (idToken) async => onAutoVerified(await _exchangeToken(idToken)),
+      onVerificationFailed: (code, message) =>
+          onVerificationFailed(FirebaseAuthFailure(code: code, message: _mapFirebaseCode(code))),
+    );
   }
 
   @override
-  Future<Either<Failure, AuthResult>> verifyOtp({required String phone, required String code}) async {
+  Future<Either<Failure, AuthResult>> confirmPhoneCode({
+    required String verificationId,
+    required String smsCode,
+  }) async {
     try {
-      // Tenant is always selected before this screen is reachable.
-      final tenantId = (await _tenantStorage.readTenantId())!;
-      final response = await _dio.post(
-        '/auth/otp/verify',
-        data: {'phone': phone, 'code': code, 'tenantId': tenantId},
-      );
-      return Right(AuthResult.fromJson(response.data as Map<String, dynamic>));
-    } on DioException catch (e) {
-      return Left(_mapError(e));
+      final idToken = await _gateway.confirmCode(verificationId: verificationId, smsCode: smsCode);
+      return _exchangeToken(idToken);
+    } on FirebaseAuthException catch (e) {
+      return Left(FirebaseAuthFailure(code: e.code, message: _mapFirebaseCode(e.code)));
     }
   }
 
@@ -47,11 +52,32 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  Future<Either<Failure, AuthResult>> _exchangeToken(String idToken) async {
+    try {
+      // Tenant is always selected before this screen is reachable.
+      final tenantId = (await _tenantStorage.readTenantId())!;
+      final response = await _dio.post('/auth/client/exchange', data: {'idToken': idToken, 'tenantId': tenantId});
+      return Right(AuthResult.fromJson(response.data as Map<String, dynamic>));
+    } on DioException catch (e) {
+      return Left(_mapError(e));
+    }
+  }
+
   Failure _mapError(DioException e) {
     final statusCode = e.response?.statusCode;
     if (statusCode == null) return NetworkFailure(e.message ?? 'network error');
     final data = e.response?.data;
     final message = (data is Map) ? (data['message']?.toString() ?? 'api error') : 'api error';
     return ApiFailure(statusCode: statusCode, message: message);
+  }
+
+  String _mapFirebaseCode(String code) {
+    return switch (code) {
+      'invalid-phone-number' => 'Número de telefone inválido.',
+      'too-many-requests' => 'Muitas tentativas. Tente novamente mais tarde.',
+      'invalid-verification-code' => 'Código de verificação inválido.',
+      'session-expired' => 'Código expirado. Solicite um novo.',
+      _ => 'Erro ao verificar telefone.',
+    };
   }
 }
