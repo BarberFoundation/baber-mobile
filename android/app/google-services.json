@@ -14,6 +14,14 @@
       },
       "oauth_client": [
         {
+          "client_id": "769611437366-lma7kd2dfkoitsbsqkg4hburlehqhuou.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.baber.baber_mobile",
+            "certificate_hash": "3ae3c1bd550303f249c69f756cd08e657d967f0b"
+          }
+        },
+        {
           "client_id": "769611437366-gqge2173n2o7fti9mn1594bqo89c13ji.apps.googleusercontent.com",
           "client_type": 3
         }
@@ -29,6 +37,13 @@
             {
               "client_id": "769611437366-gqge2173n2o7fti9mn1594bqo89c13ji.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "769611437366-0h0j07uate42s797tc07i3r80g7jk8uj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.baber.baberMobile"
+              }
             }
           ]
         }
