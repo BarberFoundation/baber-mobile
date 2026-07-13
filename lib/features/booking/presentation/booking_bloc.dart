@@ -16,11 +16,17 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
   }
 
   Future<void> _onDateSelected(DateSelected event, Emitter<BookingState> emit) async {
-    emit(state.copyWith(selectedDate: event.date, isLoading: true));
+    // Estado fresco: trocar de data invalida slots e seleção anteriores —
+    // manter slots velhos sob data nova induz agendamento errado (C5).
+    emit(BookingState(service: state.service, selectedDate: event.date, isLoading: true));
     final result = await repository.getAvailableSlots(serviceId: state.service.id, date: event.date);
     result.fold(
-      (failure) => emit(state.copyWith(errorMessage: failureMessage(failure))),
-      (slots) => emit(state.copyWith(slots: slots)),
+      (failure) => emit(BookingState(
+        service: state.service,
+        selectedDate: event.date,
+        errorMessage: failureMessage(failure),
+      )),
+      (slots) => emit(BookingState(service: state.service, selectedDate: event.date, slots: slots)),
     );
   }
 

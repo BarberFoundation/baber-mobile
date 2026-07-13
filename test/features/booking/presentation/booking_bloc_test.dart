@@ -39,6 +39,25 @@ void main() {
   );
 
   blocTest<BookingBloc, BookingState>(
+    'troca de data limpa slots antigos e falha expõe errorMessage sem slots velhos',
+    build: () {
+      when(() => repository.getAvailableSlots(serviceId: 's1', date: '2026-07-21'))
+          .thenAnswer((_) async => const Left(NetworkFailure('sem rede')));
+      return BookingBloc(repository: repository, service: service);
+    },
+    seed: () => const BookingState(
+      service: service,
+      selectedDate: '2026-07-20',
+      slots: [TimeSlot(startTime: '09:00', endTime: '09:30')],
+    ),
+    act: (bloc) => bloc.add(const DateSelected('2026-07-21')),
+    expect: () => [
+      const BookingState(service: service, selectedDate: '2026-07-21', isLoading: true),
+      const BookingState(service: service, selectedDate: '2026-07-21', errorMessage: 'sem rede'),
+    ],
+  );
+
+  blocTest<BookingBloc, BookingState>(
     'SlotSelected updates selectedSlot',
     build: () => BookingBloc(repository: repository, service: service),
     act: (bloc) => bloc.add(const SlotSelected(TimeSlot(startTime: '09:00', endTime: '09:30'))),

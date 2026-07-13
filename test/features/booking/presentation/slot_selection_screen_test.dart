@@ -20,6 +20,7 @@ void main() {
 
   setUpAll(() {
     registerFallbackValue(const SlotSelected(slot));
+    registerFallbackValue(const DateSelected(''));
   });
 
   setUp(() {
@@ -69,5 +70,22 @@ void main() {
     await tester.pumpWidget(wrap(const SlotSelectionScreen()));
 
     expect(find.text('Nenhum horário disponível nesta data.'), findsOneWidget);
+  });
+
+  testWidgets('mostra erro com botão de tentar novamente quando errorMessage presente', (tester) async {
+    whenListen(
+      bloc,
+      const Stream<BookingState>.empty(),
+      initialState: const BookingState(service: service, selectedDate: '2026-07-21', errorMessage: 'sem rede'),
+    );
+
+    await tester.pumpWidget(wrap(const SlotSelectionScreen()));
+
+    expect(find.text('Não foi possível carregar os horários.'), findsOneWidget);
+    expect(find.text('Nenhum horário disponível nesta data.'), findsNothing);
+
+    await tester.tap(find.text('Tentar novamente'));
+
+    verify(() => bloc.add(const DateSelected('2026-07-21'))).called(1);
   });
 }

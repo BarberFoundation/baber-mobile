@@ -19,6 +19,29 @@ class SlotSelectionScreen extends StatelessWidget {
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (state.errorMessage != null) {
+            return Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Não foi possível carregar os horários.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton(
+                    onPressed: () {
+                      final date = state.selectedDate;
+                      if (date != null) {
+                        context.read<BookingBloc>().add(DateSelected(date));
+                      }
+                    },
+                    child: const Text('Tentar novamente'),
+                  ),
+                ],
+              ),
+            );
+          }
           final slots = state.slots ?? [];
           if (slots.isEmpty) {
             return Center(
