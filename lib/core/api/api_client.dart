@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import '../auth/token_storage.dart';
 import '../tenancy/tenant_storage.dart';
+import 'single_flight.dart';
 
 /// Returns true if [path] is the token-refresh endpoint's request path.
 ///
@@ -14,6 +15,7 @@ class ApiClient {
   final TokenStorage tokenStorage;
   final TenantStorage tenantStorage;
   late final Interceptor authInterceptor;
+  final SingleFlight<bool> _refreshFlight = SingleFlight<bool>();
 
   ApiClient({
     required String baseUrl,
@@ -63,7 +65,9 @@ class ApiClient {
     return headers;
   }
 
-  Future<bool> _tryRefresh() async {
+  Future<bool> _tryRefresh() => _refreshFlight.run(_doRefresh);
+
+  Future<bool> _doRefresh() async {
     final refreshToken = await tokenStorage.readRefreshToken();
     if (refreshToken == null) return false;
     try {
