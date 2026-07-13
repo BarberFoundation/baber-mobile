@@ -24,6 +24,12 @@ class ApiClient {
   }) : dio = Dio(BaseOptions(baseUrl: baseUrl)) {
     authInterceptor = InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // O refresh marca skipAuth: mandar o access token expirado no
+        // Authorization do próprio /auth/refresh é credencial morta (S2).
+        if (options.extra['skipAuth'] == true) {
+          handler.next(options);
+          return;
+        }
         final headers = await buildAuthHeaders();
         options.headers.addAll(headers);
         handler.next(options);
@@ -74,7 +80,7 @@ class ApiClient {
       final response = await dio.post(
         '/auth/refresh',
         data: {'refreshToken': refreshToken},
-        options: Options(headers: {}),
+        options: Options(extra: {'skipAuth': true}),
       );
       final accessToken = response.data['accessToken'] as String;
       final newRefreshToken = response.data['refreshToken'] as String;

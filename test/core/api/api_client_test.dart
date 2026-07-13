@@ -9,6 +9,7 @@ class MockTokenStorage extends Mock implements TokenStorage {}
 class MockTenantStorage extends Mock implements TenantStorage {}
 class MockDio extends Mock implements Dio {}
 class MockErrorHandler extends Mock implements ErrorInterceptorHandler {}
+class MockRequestHandler extends Mock implements RequestInterceptorHandler {}
 
 void main() {
   late MockTokenStorage tokenStorage;
@@ -37,6 +38,31 @@ void main() {
 
     expect(result['Authorization'], 'Bearer abc');
     expect(result['X-Tenant-Id'], 't1');
+  });
+
+  group('authInterceptor.onRequest', () {
+    test('skips auth headers when the request is marked with skipAuth (S2)', () async {
+      final options = RequestOptions(path: '/auth/refresh', extra: {'skipAuth': true});
+      final handler = MockRequestHandler();
+
+      (client.authInterceptor as InterceptorsWrapper).onRequest(options, handler);
+      await untilCalled(() => handler.next(options));
+
+      expect(options.headers.containsKey('Authorization'), isFalse);
+      verifyNever(() => tokenStorage.readAccessToken());
+    });
+
+    test('attaches auth headers on ordinary requests', () async {
+      when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => 'abc');
+      when(() => tenantStorage.readTenantId()).thenAnswer((_) async => 't1');
+      final options = RequestOptions(path: '/appointments');
+      final handler = MockRequestHandler();
+
+      (client.authInterceptor as InterceptorsWrapper).onRequest(options, handler);
+      await untilCalled(() => handler.next(options));
+
+      expect(options.headers['Authorization'], 'Bearer abc');
+    });
   });
 
   group('isRefreshRequestPath (recursion guard)', () {
