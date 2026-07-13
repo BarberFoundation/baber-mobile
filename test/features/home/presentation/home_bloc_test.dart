@@ -1,22 +1,24 @@
 import 'package:bloc_test/bloc_test.dart';
 import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:baber_mobile/core/error/failure.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment_repository.dart';
+import 'package:baber_mobile/features/auth/domain/auth_user.dart';
 import 'package:baber_mobile/features/catalog/domain/service.dart';
 import 'package:baber_mobile/features/catalog/domain/service_repository.dart';
 import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
 import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_state.dart';
+import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 
-class MockDio extends Mock implements Dio {}
+class MockProfileRepository extends Mock implements ProfileRepository {}
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 class MockServiceRepository extends Mock implements ServiceRepository {}
 
 void main() {
-  late MockDio dio;
+  late MockProfileRepository profileRepository;
   late MockAppointmentRepository appointmentRepository;
   late MockServiceRepository serviceRepository;
 
@@ -30,8 +32,14 @@ void main() {
     startTime: '09:00', endTime: '09:30', status: AppointmentStatus.completed,
   );
 
+  HomeBloc buildBloc() => HomeBloc(
+        profileRepository: profileRepository,
+        appointmentRepository: appointmentRepository,
+        serviceRepository: serviceRepository,
+      );
+
   setUp(() {
-    dio = MockDio();
+    profileRepository = MockProfileRepository();
     appointmentRepository = MockAppointmentRepository();
     serviceRepository = MockServiceRepository();
   });
@@ -39,14 +47,11 @@ void main() {
   blocTest<HomeBloc, HomeState>(
     'loads profile name and the earliest upcoming appointment',
     build: () {
-      when(() => dio.get('/me')).thenAnswer((_) async => Response(
-            requestOptions: RequestOptions(path: '/me'),
-            statusCode: 200,
-            data: {'name': 'João', 'phone': '+55'},
-          ));
+      when(() => profileRepository.getMe())
+          .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+55')));
       when(() => appointmentRepository.listMine()).thenAnswer((_) async => Right([past, future]));
       when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
-      return HomeBloc(dio: dio, appointmentRepository: appointmentRepository, serviceRepository: serviceRepository);
+      return buildBloc();
     },
     act: (bloc) => bloc.add(LoadHome()),
     expect: () => [
@@ -58,19 +63,44 @@ void main() {
   blocTest<HomeBloc, HomeState>(
     'nextAppointment is null when there are no upcoming appointments',
     build: () {
-      when(() => dio.get('/me')).thenAnswer((_) async => Response(
-            requestOptions: RequestOptions(path: '/me'),
-            statusCode: 200,
-            data: {'name': 'João', 'phone': '+55'},
-          ));
+      when(() => profileRepository.getMe())
+          .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+55')));
       when(() => appointmentRepository.listMine()).thenAnswer((_) async => Right([past]));
       when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
-      return HomeBloc(dio: dio, appointmentRepository: appointmentRepository, serviceRepository: serviceRepository);
+      return buildBloc();
     },
     act: (bloc) => bloc.add(LoadHome()),
     expect: () => [
       const HomeState(isLoading: true),
       const HomeState(userName: 'João'),
+    ],
+  );
+
+  blocTest<HomeBloc, HomeState>(
+    'emits sessionExpired when the profile fetch is unauthorized',
+    build: () {
+      when(() => profileRepository.getMe()).thenAnswer((_) async => const Left(UnauthorizedFailure()));
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(LoadHome()),
+    expect: () => [
+      const HomeState(isLoading: true),
+      const HomeState(sessionExpired: true),
+    ],
+  );
+
+  blocTest<HomeBloc, HomeState>(
+    'keeps loading the dashboard without a name on a non-auth profile failure',
+    build: () {
+      when(() => profileRepository.getMe()).thenAnswer((_) async => const Left(NetworkFailure('timeout')));
+      when(() => appointmentRepository.listMine()).thenAnswer((_) async => Right([past]));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(LoadHome()),
+    expect: () => [
+      const HomeState(isLoading: true),
+      const HomeState(userName: null),
     ],
   );
 }

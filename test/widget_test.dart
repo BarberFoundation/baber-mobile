@@ -1,5 +1,4 @@
 import 'package:dartz/dartz.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:baber_mobile/baber_app.dart';
 import 'package:baber_mobile/core/auth/token_storage.dart';
@@ -11,6 +10,7 @@ import 'package:baber_mobile/features/auth/domain/auth_repository.dart';
 import 'package:baber_mobile/features/booking/domain/booking_repository.dart';
 import 'package:baber_mobile/features/catalog/domain/service_repository.dart';
 import 'package:baber_mobile/features/notifications/domain/notifications_repository.dart';
+import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 import 'package:baber_mobile/features/tenant_selection/domain/tenant.dart';
 import 'package:baber_mobile/features/tenant_selection/domain/tenant_repository.dart';
 
@@ -22,6 +22,7 @@ class MockServiceRepository extends Mock implements ServiceRepository {}
 class MockBookingRepository extends Mock implements BookingRepository {}
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 class MockNotificationsRepository extends Mock implements NotificationsRepository {}
+class MockProfileRepository extends Mock implements ProfileRepository {}
 class MockAppLinks extends Mock implements AppLinks {}
 
 void main() {
@@ -45,7 +46,7 @@ void main() {
       bookingRepository: MockBookingRepository(),
       appointmentRepository: MockAppointmentRepository(),
       notificationsRepository: MockNotificationsRepository(),
-      dio: Dio(),
+      profileRepository: MockProfileRepository(),
       appLinks: appLinks,
     ));
     await tester.pumpAndSettle();

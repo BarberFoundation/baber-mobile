@@ -1,11 +1,13 @@
 import 'package:app_links/app_links.dart';
-import 'package:dio/dio.dart';
+import 'package:dartz/dartz.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../auth/token_storage.dart';
+import '../error/failure.dart';
 import '../tenancy/tenant_storage.dart';
 import '../../features/auth/domain/auth_repository.dart';
+import '../../features/auth/domain/auth_user.dart';
 import '../../features/auth/presentation/auth_bloc.dart';
 import '../../features/auth/presentation/name_screen.dart';
 import '../../features/auth/presentation/otp_screen.dart';
@@ -28,6 +30,7 @@ import '../../features/home/presentation/home_screen.dart';
 import '../../features/notifications/domain/notifications_repository.dart';
 import '../../features/notifications/presentation/notifications_bloc.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/profile/domain/profile_repository.dart';
 import '../../features/splash/presentation/initial_route_resolver.dart';
 import '../../features/splash/presentation/splash_screen.dart';
 import '../../features/tenant_selection/domain/tenant_repository.dart';
@@ -44,7 +47,7 @@ GoRouter buildAppRouter({
   required BookingRepository bookingRepository,
   required AppointmentRepository appointmentRepository,
   required NotificationsRepository notificationsRepository,
-  required Dio dio,
+  required ProfileRepository profileRepository,
   required AppLinks appLinks,
 }) {
   final resolver = InitialRouteResolver(
@@ -87,7 +90,7 @@ GoRouter buildAppRouter({
               path: '/home',
               builder: (context, state) => BlocProvider(
                 create: (_) => HomeBloc(
-                  dio: dio,
+                  profileRepository: profileRepository,
                   appointmentRepository: appointmentRepository,
                   serviceRepository: serviceRepository,
                 ),
@@ -135,21 +138,18 @@ GoRouter buildAppRouter({
           GoRoute(path: '/booking/slots', builder: (context, state) => const SlotSelectionScreen()),
           GoRoute(
             path: '/booking/confirm',
-            builder: (context, state) => FutureBuilder<Map<String, dynamic>>(
-              // Best-effort prefill: if the profile fetch fails for any reason
-              // (expired session, network blip), fall back to empty fields
-              // rather than crashing the booking flow — the user can still
-              // type name/phone by hand, and a truly dead session will
-              // surface clearly when BookingConfirmed itself fails.
-              future: dio.get('/me').then((r) => r.data as Map<String, dynamic>).catchError((_) => <String, dynamic>{}),
+            builder: (context, state) => FutureBuilder<Either<Failure, AuthUser>>(
+              future: profileRepository.getMe(),
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
                   return const Scaffold(body: Center(child: CircularProgressIndicator()));
                 }
-                final data = snapshot.data!;
-                return ConfirmBookingScreen(
-                  initialName: (data['name'] as String?) ?? '',
-                  initialPhone: (data['phone'] as String?) ?? '',
+                // Best-effort prefill: qualquer falha (sessão, rede) cai em campos
+                // vazios — o usuário ainda digita nome/telefone na mão, e sessão
+                // realmente morta aparece quando BookingConfirmed falhar.
+                return snapshot.data!.fold(
+                  (_) => const ConfirmBookingScreen(initialName: '', initialPhone: ''),
+                  (user) => ConfirmBookingScreen(initialName: user.name ?? '', initialPhone: user.phone),
                 );
               },
             ),

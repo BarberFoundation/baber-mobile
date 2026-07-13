@@ -1,5 +1,4 @@
 import 'package:app_links/app_links.dart';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'core/auth/token_storage.dart';
 import 'core/router/app_router.dart';
@@ -9,6 +8,7 @@ import 'features/auth/domain/auth_repository.dart';
 import 'features/booking/domain/booking_repository.dart';
 import 'features/catalog/domain/service_repository.dart';
 import 'features/notifications/domain/notifications_repository.dart';
+import 'features/profile/domain/profile_repository.dart';
 import 'features/tenant_selection/domain/tenant_repository.dart';
 import 'shared/theme/app_theme.dart';
 
@@ -21,7 +21,7 @@ class BaberApp extends StatelessWidget {
   final BookingRepository bookingRepository;
   final AppointmentRepository appointmentRepository;
   final NotificationsRepository notificationsRepository;
-  final Dio dio;
+  final ProfileRepository profileRepository;
   final AppLinks appLinks;
 
   const BaberApp({
@@ -34,7 +34,7 @@ class BaberApp extends StatelessWidget {
     required this.bookingRepository,
     required this.appointmentRepository,
     required this.notificationsRepository,
-    required this.dio,
+    required this.profileRepository,
     required this.appLinks,
   });
 
@@ -49,7 +49,7 @@ class BaberApp extends StatelessWidget {
       bookingRepository: bookingRepository,
       appointmentRepository: appointmentRepository,
       notificationsRepository: notificationsRepository,
-      dio: dio,
+      profileRepository: profileRepository,
       appLinks: appLinks,
     );
     return MaterialApp.router(

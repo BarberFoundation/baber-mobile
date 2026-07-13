@@ -13,6 +13,7 @@ import 'features/auth/data/auth_repository_impl.dart';
 import 'features/booking/data/booking_repository_impl.dart';
 import 'features/catalog/data/service_repository_impl.dart';
 import 'features/notifications/data/notifications_repository_impl.dart';
+import 'features/profile/data/profile_repository_impl.dart';
 import 'features/tenant_selection/data/tenant_repository_impl.dart';
 import 'firebase_options.dart';
 
@@ -38,6 +39,7 @@ void main() async {
   final bookingRepository = BookingRepositoryImpl(apiClient.dio);
   final appointmentRepository = AppointmentRepositoryImpl(apiClient.dio);
   final notificationsRepository = NotificationsRepositoryImpl(apiClient.dio);
+  final profileRepository = ProfileRepositoryImpl(apiClient.dio);
 
   runApp(BaberApp(
     tokenStorage: tokenStorage,
@@ -48,7 +50,7 @@ void main() async {
     bookingRepository: bookingRepository,
     appointmentRepository: appointmentRepository,
     notificationsRepository: notificationsRepository,
-    dio: apiClient.dio,
+    profileRepository: profileRepository,
     appLinks: AppLinks(),
   ));
 }
