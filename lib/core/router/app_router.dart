@@ -1,5 +1,5 @@
 import 'package:app_links/app_links.dart';
-import 'package:dartz/dartz.dart';
+import 'package:dartz/dartz.dart' hide State;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
@@ -37,6 +37,27 @@ import '../../features/tenant_selection/domain/tenant_repository.dart';
 import '../../features/tenant_selection/presentation/tenant_selection_bloc.dart';
 import '../../features/tenant_selection/presentation/tenant_selection_screen.dart';
 import '../../shared/widgets/main_shell.dart';
+
+class _RedirectToServices extends StatefulWidget {
+  const _RedirectToServices();
+
+  @override
+  State<_RedirectToServices> createState() => _RedirectToServicesState();
+}
+
+class _RedirectToServicesState extends State<_RedirectToServices> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.go('/services');
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) =>
+      const Scaffold(body: Center(child: CircularProgressIndicator()));
+}
 
 GoRouter buildAppRouter({
   required TokenStorage tokenStorage,
@@ -129,10 +150,19 @@ GoRouter buildAppRouter({
         ),
       ),
       ShellRoute(
-        builder: (context, state, child) => BlocProvider(
-          create: (_) => BookingBloc(repository: bookingRepository, service: state.extra as Service),
-          child: child,
-        ),
+        builder: (context, state, child) {
+          final service = state.extra;
+          // Restore de processo (Android mata o app em background) perde o
+          // extra — go_router não serializa objetos. Volta pro catálogo em
+          // vez de TypeError no boot da rota (C8).
+          if (service is! Service) {
+            return const _RedirectToServices();
+          }
+          return BlocProvider(
+            create: (_) => BookingBloc(repository: bookingRepository, service: service),
+            child: child,
+          );
+        },
         routes: [
           GoRoute(path: '/booking/date', builder: (context, state) => const DateSelectionScreen()),
           GoRoute(path: '/booking/slots', builder: (context, state) => const SlotSelectionScreen()),
