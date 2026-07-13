@@ -36,15 +36,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     final servicesResult = await serviceRepository.listServices();
 
     final appointments = appointmentsResult.fold((_) => <Appointment>[], (a) => a);
-    final now = DateTime.now();
-    final upcoming = appointments
-        .where((a) =>
-            a.status != AppointmentStatus.cancelled &&
-            a.status != AppointmentStatus.completed &&
-            DateTime.parse('${a.date}T${a.startTime}:00').isAfter(now))
-        .toList()
-      ..sort((a, b) =>
-          DateTime.parse('${a.date}T${a.startTime}:00').compareTo(DateTime.parse('${b.date}T${b.startTime}:00')));
+    final upcoming = appointments.where((a) => a.isUpcoming).toList()
+      ..sort((a, b) => a.startDateTime!.compareTo(b.startDateTime!));
 
     final next = upcoming.isEmpty ? null : upcoming.first;
     final serviceNames = servicesResult.fold(

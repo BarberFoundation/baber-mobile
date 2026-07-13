@@ -137,12 +137,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final appointments = state.appointments ?? [];
-          final upcoming = appointments
-              .where((a) =>
-                  a.status != AppointmentStatus.cancelled &&
-                  a.status != AppointmentStatus.completed &&
-                  DateTime.parse('${a.date}T${a.startTime}:00').isAfter(DateTime.now()))
-              .toList();
+          final upcoming = appointments.where((a) => a.isUpcoming).toList();
           final history = appointments.where((a) => !upcoming.contains(a)).toList();
 
           if (appointments.isEmpty) {

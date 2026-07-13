@@ -43,10 +43,18 @@ class Appointment extends Equatable {
         status: appointmentStatusFromString(json['status'] as String),
       );
 
+  /// Null quando date/startTime vierem malformados do backend — chamadores
+  /// tratam como "não futuro" em vez de FormatException no build (C7).
+  DateTime? get startDateTime => DateTime.tryParse('${date}T$startTime:00');
+
+  bool get isUpcoming =>
+      status != AppointmentStatus.cancelled &&
+      status != AppointmentStatus.completed &&
+      (startDateTime?.isAfter(DateTime.now()) ?? false);
+
   bool get isCancellable {
     if (status != AppointmentStatus.pending && status != AppointmentStatus.confirmed) return false;
-    final startsAt = DateTime.parse('${date}T$startTime:00');
-    return startsAt.isAfter(DateTime.now());
+    return startDateTime?.isAfter(DateTime.now()) ?? false;
   }
 
   @override
