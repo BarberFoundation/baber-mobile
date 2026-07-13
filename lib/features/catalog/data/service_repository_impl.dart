@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import '../../../core/error/dio_failure_mapper.dart';
 import '../../../core/error/failure.dart';
 import '../domain/service.dart';
 import '../domain/service_repository.dart';
@@ -17,15 +18,7 @@ class ServiceRepositoryImpl implements ServiceRepository {
           .toList();
       return Right(services);
     } on DioException catch (e) {
-      return Left(_mapError(e));
+      return Left(mapDioError(e));
     }
-  }
-
-  Failure _mapError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == null) return NetworkFailure(e.message ?? 'network error');
-    final data = e.response?.data;
-    final message = (data is Map) ? (data['message']?.toString() ?? 'api error') : 'api error';
-    return ApiFailure(statusCode: statusCode, message: message);
   }
 }

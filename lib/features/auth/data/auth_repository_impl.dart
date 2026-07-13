@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import '../../../core/error/dio_failure_mapper.dart';
 import '../../../core/error/failure.dart';
 import '../../../core/firebase/firebase_auth_gateway.dart';
 import '../../../core/tenancy/tenant_storage.dart';
@@ -48,7 +49,7 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await _dio.patch('/me', data: {'name': name});
       return Right(AuthUser.fromJson(response.data as Map<String, dynamic>));
     } on DioException catch (e) {
-      return Left(_mapError(e));
+      return Left(mapDioError(e));
     }
   }
 
@@ -59,16 +60,8 @@ class AuthRepositoryImpl implements AuthRepository {
       final response = await _dio.post('/auth/client/exchange', data: {'idToken': idToken, 'tenantId': tenantId});
       return Right(AuthResult.fromJson(response.data as Map<String, dynamic>));
     } on DioException catch (e) {
-      return Left(_mapError(e));
+      return Left(mapDioError(e));
     }
-  }
-
-  Failure _mapError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == null) return NetworkFailure(e.message ?? 'network error');
-    final data = e.response?.data;
-    final message = (data is Map) ? (data['message']?.toString() ?? 'api error') : 'api error';
-    return ApiFailure(statusCode: statusCode, message: message);
   }
 
   String _mapFirebaseCode(String code) {
@@ -77,7 +70,9 @@ class AuthRepositoryImpl implements AuthRepository {
       'too-many-requests' => 'Muitas tentativas. Tente novamente mais tarde.',
       'invalid-verification-code' => 'Código de verificação inválido.',
       'session-expired' => 'Código expirado. Solicite um novo.',
-      _ => 'Erro ao verificar telefone.',
+      // TEMP debug: surface the raw Firebase code until the real cause is
+      // identified (no adb/log access to the test device).
+      _ => 'Erro ao verificar telefone ($code).',
     };
   }
 }

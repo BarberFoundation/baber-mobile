@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import '../../../core/error/dio_failure_mapper.dart';
 import '../../../core/error/failure.dart';
 import '../domain/tenant.dart';
 import '../domain/tenant_repository.dart';
@@ -17,7 +18,7 @@ class TenantRepositoryImpl implements TenantRepository {
           .toList();
       return Right(tenants);
     } on DioException catch (e) {
-      return Left(_mapError(e));
+      return Left(mapDioError(e));
     }
   }
 
@@ -27,15 +28,7 @@ class TenantRepositoryImpl implements TenantRepository {
       final response = await _dio.get('/tenants/$slug');
       return Right(Tenant.fromJson(response.data as Map<String, dynamic>));
     } on DioException catch (e) {
-      return Left(_mapError(e));
+      return Left(mapDioError(e));
     }
-  }
-
-  Failure _mapError(DioException e) {
-    final statusCode = e.response?.statusCode;
-    if (statusCode == null) return NetworkFailure(e.message ?? 'network error');
-    final data = e.response?.data;
-    final message = (data is Map) ? (data['message']?.toString() ?? 'api error') : 'api error';
-    return ApiFailure(statusCode: statusCode, message: message);
   }
 }

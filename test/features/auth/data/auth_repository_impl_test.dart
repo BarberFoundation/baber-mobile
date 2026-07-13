@@ -158,7 +158,7 @@ void main() {
       });
     });
 
-    test('maps a dio failure on exchange to ApiFailure', () async {
+    test('maps a 401 on exchange to UnauthorizedFailure', () async {
       when(() => gateway.confirmCode(verificationId: 'ver-123', smsCode: '000000'))
           .thenAnswer((_) async => 'id-token-xyz');
       when(() => dio.post('/auth/client/exchange', data: {'idToken': 'id-token-xyz', 'tenantId': 't1'}))
@@ -174,8 +174,7 @@ void main() {
       final result = await repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '000000');
 
       result.fold((failure) {
-        expect(failure, isA<ApiFailure>());
-        expect((failure as ApiFailure).statusCode, 401);
+        expect(failure, const UnauthorizedFailure());
       }, (_) => fail('expected left'));
     });
 
