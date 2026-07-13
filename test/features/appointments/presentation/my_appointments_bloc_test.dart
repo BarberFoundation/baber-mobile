@@ -86,6 +86,35 @@ void main() {
   );
 
   blocTest<MyAppointmentsBloc, MyAppointmentsState>(
+    'falha no cancelamento preserva a lista carregada',
+    build: () {
+      when(() => appointmentRepository.cancel('appt-1'))
+          .thenAnswer((_) async => const Left(ApiFailure(statusCode: 422, message: 'muito tarde para cancelar')));
+      return MyAppointmentsBloc(
+        appointmentRepository: appointmentRepository,
+        serviceRepository: serviceRepository,
+      );
+    },
+    seed: () => const MyAppointmentsState(
+      appointments: [appointment],
+      serviceNames: {'s1': 'Corte'},
+    ),
+    act: (bloc) => bloc.add(const CancelAppointmentRequested('appt-1')),
+    expect: () => [
+      const MyAppointmentsState(
+        appointments: [appointment],
+        serviceNames: {'s1': 'Corte'},
+        isLoading: true,
+      ),
+      const MyAppointmentsState(
+        appointments: [appointment],
+        serviceNames: {'s1': 'Corte'},
+        errorMessage: 'muito tarde para cancelar',
+      ),
+    ],
+  );
+
+  blocTest<MyAppointmentsBloc, MyAppointmentsState>(
     'CancelAppointmentRequested cancels then reloads the list',
     build: () {
       when(() => appointmentRepository.cancel('appt-1')).thenAnswer((_) async => const Right(null));
@@ -99,6 +128,8 @@ void main() {
     seed: () => const MyAppointmentsState.loaded(appointments: [appointment], serviceNames: {'s1': 'Corte'}),
     act: (bloc) => bloc.add(const CancelAppointmentRequested('appt-1')),
     expect: () => [
+      // cancelamento mantém a lista visível enquanto carrega
+      const MyAppointmentsState(appointments: [appointment], serviceNames: {'s1': 'Corte'}, isLoading: true),
       const MyAppointmentsState.loading(),
       const MyAppointmentsState.loaded(appointments: [], serviceNames: {'s1': 'Corte'}),
     ],

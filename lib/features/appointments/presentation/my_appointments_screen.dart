@@ -132,7 +132,8 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
           }
         },
         builder: (context, state) {
-          if (state.isLoading) {
+          // Durante cancelamento a lista continua visível; spinner cheio só sem dados.
+          if (state.isLoading && state.appointments == null) {
             return const Center(child: CircularProgressIndicator());
           }
           final appointments = state.appointments ?? [];

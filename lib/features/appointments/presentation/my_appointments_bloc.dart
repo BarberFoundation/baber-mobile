@@ -42,11 +42,25 @@ class MyAppointmentsBloc extends Bloc<MyAppointmentsEvent, MyAppointmentsState> 
   }
 
   Future<void> _onCancel(CancelAppointmentRequested event, Emitter<MyAppointmentsState> emit) async {
-    emit(const MyAppointmentsState.loading());
+    // Loading e erro preservam a lista já carregada — cancelamento falho
+    // não pode apagar os dados da tela (C6).
+    emit(MyAppointmentsState(
+      appointments: state.appointments,
+      serviceNames: state.serviceNames,
+      isLoading: true,
+    ));
     final result = await appointmentRepository.cancel(event.appointmentId);
-    final failure = result.fold((f) => f, (_) => null);
+    final failure = result.fold<Failure?>((f) => f, (_) => null);
+    if (failure is UnauthorizedFailure) {
+      emit(const MyAppointmentsState(sessionExpired: true));
+      return;
+    }
     if (failure != null) {
-      emit(MyAppointmentsState.error(failureMessage(failure)));
+      emit(MyAppointmentsState(
+        appointments: state.appointments,
+        serviceNames: state.serviceNames,
+        errorMessage: failureMessage(failure),
+      ));
       return;
     }
     add(LoadMyAppointments());
