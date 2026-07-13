@@ -68,7 +68,10 @@ class _HomeScreenState extends State<HomeScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
             );
-            _logout(context);
+            // Sessão expirada não apaga o tenant: o usuário volta pro login do
+            // mesmo salão. Logout manual continua indo para /tenant-selection.
+            widget.tokenStorage.clear();
+            context.go('/phone');
           }
         },
         builder: (context, state) {

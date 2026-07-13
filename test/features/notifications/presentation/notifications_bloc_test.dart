@@ -37,6 +37,20 @@ void main() {
   );
 
   blocTest<NotificationsBloc, NotificationsState>(
+    'emite sessionExpired quando listMine retorna UnauthorizedFailure',
+    build: () {
+      when(() => repository.listMine())
+          .thenAnswer((_) async => const Left(UnauthorizedFailure()));
+      return NotificationsBloc(repository: repository);
+    },
+    act: (bloc) => bloc.add(LoadNotifications()),
+    expect: () => [
+      const NotificationsState.loading(),
+      const NotificationsState(sessionExpired: true),
+    ],
+  );
+
+  blocTest<NotificationsBloc, NotificationsState>(
     'emits [loading, error] when LoadNotifications fails',
     build: () {
       when(() => repository.listMine())

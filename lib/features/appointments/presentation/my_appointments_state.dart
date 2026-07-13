@@ -6,12 +6,14 @@ class MyAppointmentsState extends Equatable {
   final Map<String, String> serviceNames;
   final String? errorMessage;
   final bool isLoading;
+  final bool sessionExpired;
 
   const MyAppointmentsState({
     this.appointments,
     this.serviceNames = const {},
     this.errorMessage,
     this.isLoading = false,
+    this.sessionExpired = false,
   });
 
   const MyAppointmentsState.initial() : this();
@@ -21,5 +23,5 @@ class MyAppointmentsState extends Equatable {
   const MyAppointmentsState.error(String message) : this(errorMessage: message);
 
   @override
-  List<Object?> get props => [appointments, serviceNames, errorMessage, isLoading];
+  List<Object?> get props => [appointments, serviceNames, errorMessage, isLoading, sessionExpired];
 }

@@ -1,4 +1,5 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/error/failure_message.dart';
 import '../../catalog/domain/service_repository.dart';
 import '../domain/appointment.dart';
@@ -21,23 +22,23 @@ class MyAppointmentsBloc extends Bloc<MyAppointmentsEvent, MyAppointmentsState> 
     final appointmentsResult = await appointmentRepository.listMine();
     final servicesResult = await serviceRepository.listServices();
 
-    List<Appointment>? appointments;
-    String? errorMsg;
-    appointmentsResult.fold(
-      (failure) => errorMsg = failureMessage(failure),
-      (value) => appointments = value,
-    );
-    if (errorMsg != null) {
-      emit(MyAppointmentsState.error(errorMsg!));
+    final failure = appointmentsResult.fold<Failure?>((f) => f, (_) => null);
+    if (failure is UnauthorizedFailure) {
+      emit(const MyAppointmentsState(sessionExpired: true));
+      return;
+    }
+    if (failure != null) {
+      emit(MyAppointmentsState.error(failureMessage(failure)));
       return;
     }
 
+    final appointments = appointmentsResult.fold((_) => <Appointment>[], (a) => a);
     final serviceNames = servicesResult.fold(
       (_) => <String, String>{},
       (services) => {for (final s in services) s.id: s.name},
     );
 
-    emit(MyAppointmentsState.loaded(appointments: appointments!, serviceNames: serviceNames));
+    emit(MyAppointmentsState.loaded(appointments: appointments, serviceNames: serviceNames));
   }
 
   Future<void> _onCancel(CancelAppointmentRequested event, Emitter<MyAppointmentsState> emit) async {

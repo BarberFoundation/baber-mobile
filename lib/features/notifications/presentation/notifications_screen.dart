@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:go_router/go_router.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/relative_time.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
@@ -50,6 +51,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       appBar: const BarberAppBar(title: 'Notificações'),
       body: BlocConsumer<NotificationsBloc, NotificationsState>(
         listener: (context, state) {
+          if (state.sessionExpired) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
+            );
+            context.go('/phone');
+            return;
+          }
           if (state.errorMessage != null) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text(state.errorMessage!)),

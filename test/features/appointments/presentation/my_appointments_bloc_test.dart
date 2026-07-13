@@ -68,6 +68,24 @@ void main() {
   );
 
   blocTest<MyAppointmentsBloc, MyAppointmentsState>(
+    'emite sessionExpired quando listMine retorna UnauthorizedFailure',
+    build: () {
+      when(() => appointmentRepository.listMine())
+          .thenAnswer((_) async => const Left(UnauthorizedFailure()));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([]));
+      return MyAppointmentsBloc(
+        appointmentRepository: appointmentRepository,
+        serviceRepository: serviceRepository,
+      );
+    },
+    act: (bloc) => bloc.add(LoadMyAppointments()),
+    expect: () => [
+      const MyAppointmentsState.loading(),
+      const MyAppointmentsState(sessionExpired: true),
+    ],
+  );
+
+  blocTest<MyAppointmentsBloc, MyAppointmentsState>(
     'CancelAppointmentRequested cancels then reloads the list',
     build: () {
       when(() => appointmentRepository.cancel('appt-1')).thenAnswer((_) async => const Right(null));
