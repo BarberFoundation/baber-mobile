@@ -20,7 +20,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   Future<void> _onPhoneSubmitted(PhoneSubmitted event, Emitter<AuthState> emit) async {
-    emit(const AuthState.loading());
+    emit(state.copyWith(isLoading: true));
     await repository.requestPhoneCode(
       phone: event.phone,
       onCodeSent: (verificationId) => add(PhoneCodeSent(phone: event.phone, verificationId: verificationId)),
@@ -30,40 +30,40 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   }
 
   void _onPhoneCodeSent(PhoneCodeSent event, Emitter<AuthState> emit) {
-    emit(AuthState.codeSent(phone: event.phone, verificationId: event.verificationId));
+    emit(state.copyWith(codeSentToPhone: event.phone, verificationId: event.verificationId));
   }
 
   Future<void> _onAutoVerificationCompleted(AutoVerificationCompleted event, Emitter<AuthState> emit) async {
     await event.result.fold(
-      (failure) async => emit(AuthState.error(failureMessage(failure))),
+      (failure) async => emit(state.copyWith(errorMessage: failureMessage(failure))),
       (authResult) => _completeLogin(authResult, emit),
     );
   }
 
   void _onPhoneVerificationFailed(PhoneVerificationFailed event, Emitter<AuthState> emit) {
-    emit(AuthState.error(failureMessage(event.failure)));
+    emit(state.copyWith(errorMessage: failureMessage(event.failure)));
   }
 
   Future<void> _onCodeSubmitted(CodeSubmitted event, Emitter<AuthState> emit) async {
     final verificationId = state.verificationId;
-    emit(const AuthState.loading());
+    emit(state.copyWith(isLoading: true));
     if (verificationId == null) {
-      emit(const AuthState.error('Código expirado. Solicite um novo.'));
+      emit(state.copyWith(errorMessage: 'Código expirado. Solicite um novo.'));
       return;
     }
     final result = await repository.confirmPhoneCode(verificationId: verificationId, smsCode: event.code);
     await result.fold(
-      (failure) async => emit(AuthState.error(failureMessage(failure))),
+      (failure) async => emit(state.copyWith(errorMessage: failureMessage(failure))),
       (authResult) => _completeLogin(authResult, emit),
     );
   }
 
   Future<void> _onNameSubmitted(NameSubmitted event, Emitter<AuthState> emit) async {
-    emit(const AuthState.loading());
+    emit(state.copyWith(isLoading: true));
     final result = await repository.updateName(event.name);
     result.fold(
-      (failure) => emit(AuthState.error(failureMessage(failure))),
-      (user) => emit(AuthState.authenticated(user)),
+      (failure) => emit(state.copyWith(errorMessage: failureMessage(failure))),
+      (user) => emit(state.copyWith(authenticatedUser: user)),
     );
   }
 
@@ -73,9 +73,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       refreshToken: authResult.refreshToken,
     );
     if (authResult.user.needsName) {
-      emit(AuthState.needsName(authResult.user));
+      emit(state.copyWith(userNeedingName: authResult.user));
     } else {
-      emit(AuthState.authenticated(authResult.user));
+      emit(state.copyWith(authenticatedUser: authResult.user));
     }
   }
 }

@@ -43,8 +43,8 @@ void main() {
     },
     act: (bloc) => bloc.add(const PhoneSubmitted('+5511999999999')),
     expect: () => [
-      const AuthState.loading(),
-      const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
+      const AuthState(isLoading: true),
+      const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123'),
     ],
   );
 
@@ -65,8 +65,8 @@ void main() {
     },
     act: (bloc) => bloc.add(const PhoneSubmitted('+5511999999999')),
     expect: () => [
-      const AuthState.loading(),
-      const AuthState.needsName(userNeedsName),
+      const AuthState(isLoading: true),
+      const AuthState(userNeedingName: userNeedsName),
     ],
     verify: (_) {
       verify(() => tokenStorage.saveTokens(accessToken: 'a', refreshToken: 'r')).called(1);
@@ -89,14 +89,14 @@ void main() {
     },
     act: (bloc) => bloc.add(const PhoneSubmitted('+5511999999999')),
     expect: () => [
-      const AuthState.loading(),
-      const AuthState.error('Número inválido.'),
+      const AuthState(isLoading: true),
+      const AuthState(errorMessage: 'Número inválido.'),
     ],
   );
 
   blocTest<AuthBloc, AuthState>(
     'emits [loading, needsName] when CodeSubmitted confirms the code with the stored verificationId',
-    seed: () => const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
+    seed: () => const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123'),
     build: () {
       when(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '123456'))
           .thenAnswer((_) async => const Right(authResult));
@@ -104,8 +104,12 @@ void main() {
     },
     act: (bloc) => bloc.add(const CodeSubmitted(phone: '+5511999999999', code: '123456')),
     expect: () => [
-      const AuthState.loading(),
-      const AuthState.needsName(userNeedsName),
+      const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123', isLoading: true),
+      const AuthState(
+        codeSentToPhone: '+5511999999999',
+        verificationId: 'ver-123',
+        userNeedingName: userNeedsName,
+      ),
     ],
     verify: (_) {
       verify(() => tokenStorage.saveTokens(accessToken: 'a', refreshToken: 'r')).called(1);
@@ -114,7 +118,7 @@ void main() {
 
   blocTest<AuthBloc, AuthState>(
     'emits [loading, error] with mapped message when CodeSubmitted fails',
-    seed: () => const AuthState.codeSent(phone: '+5511999999999', verificationId: 'ver-123'),
+    seed: () => const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123'),
     build: () {
       when(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '000000')).thenAnswer(
         (_) async => const Left(FirebaseAuthFailure(code: 'invalid-verification-code', message: 'Código inválido.')),
@@ -123,9 +127,37 @@ void main() {
     },
     act: (bloc) => bloc.add(const CodeSubmitted(phone: '+5511999999999', code: '000000')),
     expect: () => [
-      const AuthState.loading(),
-      const AuthState.error('Código inválido.'),
+      const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123', isLoading: true),
+      const AuthState(
+        codeSentToPhone: '+5511999999999',
+        verificationId: 'ver-123',
+        errorMessage: 'Código inválido.',
+      ),
     ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'preserva verificationId após erro: código errado seguido de código certo autentica',
+    build: () {
+      when(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '000000'))
+          .thenAnswer((_) async => const Left(FirebaseAuthFailure(
+                code: 'invalid-verification-code',
+                message: 'Código de verificação inválido.',
+              )));
+      when(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '123456'))
+          .thenAnswer((_) async => const Right(authResult));
+      return AuthBloc(repository: repository, tokenStorage: tokenStorage);
+    },
+    seed: () => const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123'),
+    act: (bloc) async {
+      bloc.add(const CodeSubmitted(phone: '+5511999999999', code: '000000'));
+      await Future<void>.delayed(Duration.zero);
+      bloc.add(const CodeSubmitted(phone: '+5511999999999', code: '123456'));
+    },
+    verify: (bloc) {
+      expect(bloc.state.userNeedingName, userNeedsName);
+      verify(() => repository.confirmPhoneCode(verificationId: 'ver-123', smsCode: '123456')).called(1);
+    },
   );
 
   blocTest<AuthBloc, AuthState>(
@@ -137,8 +169,8 @@ void main() {
     },
     act: (bloc) => bloc.add(const NameSubmitted('Gabryel')),
     expect: () => [
-      const AuthState.loading(),
-      const AuthState.authenticated(AuthUser(id: 'u1', name: 'Gabryel', phone: '+5511999999999')),
+      const AuthState(isLoading: true),
+      const AuthState(authenticatedUser: AuthUser(id: 'u1', name: 'Gabryel', phone: '+5511999999999')),
     ],
   );
 }

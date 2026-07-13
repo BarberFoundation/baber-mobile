@@ -19,12 +19,27 @@ class AuthState extends Equatable {
   });
 
   const AuthState.initial() : this();
-  const AuthState.loading() : this(isLoading: true);
-  const AuthState.codeSent({required String phone, required String verificationId})
-      : this(codeSentToPhone: phone, verificationId: verificationId);
-  const AuthState.needsName(AuthUser user) : this(userNeedingName: user);
-  const AuthState.authenticated(AuthUser user) : this(authenticatedUser: user);
-  const AuthState.error(String message) : this(errorMessage: message);
+
+  /// errorMessage e isLoading resetam a cada transição, a menos que passados
+  /// explicitamente. Os demais campos são preservados — um erro de código
+  /// não pode destruir o verificationId do SMS em andamento (C1 do review).
+  AuthState copyWith({
+    bool isLoading = false,
+    String? codeSentToPhone,
+    String? verificationId,
+    AuthUser? userNeedingName,
+    AuthUser? authenticatedUser,
+    String? errorMessage,
+  }) {
+    return AuthState(
+      isLoading: isLoading,
+      codeSentToPhone: codeSentToPhone ?? this.codeSentToPhone,
+      verificationId: verificationId ?? this.verificationId,
+      userNeedingName: userNeedingName ?? this.userNeedingName,
+      authenticatedUser: authenticatedUser ?? this.authenticatedUser,
+      errorMessage: errorMessage,
+    );
+  }
 
   @override
   List<Object?> get props =>

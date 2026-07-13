@@ -28,7 +28,7 @@ void main() {
 
   testWidgets('tapping Continuar dispatches NameSubmitted', (tester) async {
     const user = AuthUser(id: 'u1', name: null, phone: '+5511999999999');
-    whenListen(bloc, const Stream<AuthState>.empty(), initialState: AuthState.needsName(user));
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState(userNeedingName: user));
 
     await tester.pumpWidget(wrap(const NameScreen()));
     await tester.enterText(find.byType(TextField), 'João');
@@ -38,7 +38,7 @@ void main() {
   });
 
   testWidgets('shows spinner and disables button when loading', (tester) async {
-    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.loading());
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState(isLoading: true));
 
     await tester.pumpWidget(wrap(const NameScreen()));
 
@@ -50,7 +50,7 @@ void main() {
   testWidgets('shows error SnackBar when errorMessage present', (tester) async {
     whenListen(
       bloc,
-      Stream.fromIterable([const AuthState.error('nome inválido')]),
+      Stream.fromIterable([const AuthState(errorMessage: 'nome inválido')]),
       initialState: const AuthState.initial(),
     );
 

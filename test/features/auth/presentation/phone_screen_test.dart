@@ -36,7 +36,7 @@ void main() {
   });
 
   testWidgets('shows spinner and disables button when loading', (tester) async {
-    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.loading());
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState(isLoading: true));
 
     await tester.pumpWidget(wrap(const PhoneScreen()));
 
@@ -48,7 +48,7 @@ void main() {
   testWidgets('shows error SnackBar when errorMessage present', (tester) async {
     whenListen(
       bloc,
-      Stream.fromIterable([const AuthState.error('telefone inválido')]),
+      Stream.fromIterable([const AuthState(errorMessage: 'telefone inválido')]),
       initialState: const AuthState.initial(),
     );
 
