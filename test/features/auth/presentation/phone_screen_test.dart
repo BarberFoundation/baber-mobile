@@ -2,7 +2,9 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:baber_mobile/features/auth/domain/auth_user.dart';
 import 'package:baber_mobile/features/auth/presentation/auth_bloc.dart';
 import 'package:baber_mobile/features/auth/presentation/auth_event.dart';
 import 'package:baber_mobile/features/auth/presentation/auth_state.dart';
@@ -23,6 +25,20 @@ void main() {
 
   Widget wrap(Widget child) => MaterialApp(
         home: BlocProvider<AuthBloc>.value(value: bloc, child: child),
+      );
+
+  GoRouter routerFor(MockAuthBloc bloc) => GoRouter(
+        initialLocation: '/phone',
+        routes: [
+          GoRoute(
+            path: '/phone',
+            builder: (_, __) => BlocProvider<AuthBloc>.value(value: bloc, child: const PhoneScreen()),
+          ),
+          GoRoute(path: '/otp', builder: (_, __) => const Scaffold(body: Text('OTP_SCREEN'))),
+          GoRoute(path: '/name', builder: (_, __) => const Scaffold(body: Text('NAME_SCREEN'))),
+          GoRoute(path: '/home', builder: (_, __) => const Scaffold(body: Text('HOME_SCREEN'))),
+          GoRoute(path: '/tenant-selection', builder: (_, __) => const Scaffold(body: Text('TENANT'))),
+        ],
       );
 
   testWidgets('tapping Continuar dispatches PhoneSubmitted', (tester) async {
@@ -56,5 +72,37 @@ void main() {
     await tester.pump();
 
     expect(find.text('telefone inválido'), findsOneWidget);
+  });
+
+  testWidgets('navega para /home quando auto-verificação autentica usuário com nome', (tester) async {
+    whenListen(
+      bloc,
+      Stream.fromIterable([
+        const AuthState(isLoading: true),
+        const AuthState(authenticatedUser: AuthUser(id: 'u1', name: 'Gab', phone: '+5511999999999')),
+      ]),
+      initialState: const AuthState.initial(),
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: routerFor(bloc)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('HOME_SCREEN'), findsOneWidget);
+  });
+
+  testWidgets('navega para /name quando auto-verificação autentica usuário sem nome', (tester) async {
+    whenListen(
+      bloc,
+      Stream.fromIterable([
+        const AuthState(isLoading: true),
+        const AuthState(userNeedingName: AuthUser(id: 'u1', name: null, phone: '+5511999999999')),
+      ]),
+      initialState: const AuthState.initial(),
+    );
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: routerFor(bloc)));
+    await tester.pumpAndSettle();
+
+    expect(find.text('NAME_SCREEN'), findsOneWidget);
   });
 }

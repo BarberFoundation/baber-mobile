@@ -53,7 +53,13 @@ class _PhoneScreenState extends State<PhoneScreen> {
               SnackBar(content: Text(state.errorMessage!)),
             );
           }
-          if (state.codeSentToPhone != null) {
+          // Android pode auto-verificar (SMS Retriever) antes mesmo do codeSent —
+          // o login completa sem o usuário sair desta tela (C2 do review).
+          if (state.userNeedingName != null) {
+            context.go('/name');
+          } else if (state.authenticatedUser != null) {
+            context.go('/home');
+          } else if (state.codeSentToPhone != null) {
             context.go('/otp');
           }
         },
