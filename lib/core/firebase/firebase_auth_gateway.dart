@@ -48,6 +48,15 @@ class FirebaseAuthGatewayImpl implements FirebaseAuthGateway {
 
   Future<String> _signInAndGetIdToken(PhoneAuthCredential credential) async {
     final userCredential = await _auth.signInWithCredential(credential);
-    return (await userCredential.user!.getIdToken())!;
+    // Sem user/token após signIn é estado interno inesperado do Firebase —
+    // vira FirebaseAuthException tipada em vez de crash de null-assert (C9).
+    final idToken = await userCredential.user?.getIdToken();
+    if (idToken == null) {
+      throw FirebaseAuthException(
+        code: 'internal-error',
+        message: 'Sign-in returned no user or no idToken.',
+      );
+    }
+    return idToken;
   }
 }

@@ -70,9 +70,7 @@ class AuthRepositoryImpl implements AuthRepository {
       'too-many-requests' => 'Muitas tentativas. Tente novamente mais tarde.',
       'invalid-verification-code' => 'Código de verificação inválido.',
       'session-expired' => 'Código expirado. Solicite um novo.',
-      // TEMP debug: surface the raw Firebase code until the real cause is
-      // identified (no adb/log access to the test device).
-      _ => 'Erro ao verificar telefone ($code).',
+      _ => 'Erro ao verificar telefone. Tente novamente.',
     };
   }
 }

@@ -7,6 +7,50 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:769611437366:android:ee9ab0f0e830b7389f4f97",
+        "android_client_info": {
+          "package_name": "baber.fundation"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "769611437366-pnoal4dal0596q0i6m243fpafvgfrrni.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "baber.fundation",
+            "certificate_hash": "3ae3c1bd550303f249c69f756cd08e657d967f0b"
+          }
+        },
+        {
+          "client_id": "769611437366-gqge2173n2o7fti9mn1594bqo89c13ji.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4ZBQaM7lXGhPCT7mRsuhuM_cxpBSRiUQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "769611437366-gqge2173n2o7fti9mn1594bqo89c13ji.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "769611437366-0h0j07uate42s797tc07i3r80g7jk8uj.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.baber.baberMobile"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:769611437366:android:383ab68bb8ab5c9e9f4f97",
         "android_client_info": {
           "package_name": "com.baber.baber_mobile"

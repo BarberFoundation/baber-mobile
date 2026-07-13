@@ -210,7 +210,7 @@ Causa-raiz do C1. Cada construtor nomeado é combinação implícita de nulls qu
 
 ## Veredito final
 
-> **Atualização 2026-07-13:** bloqueadores C1, C2, C3, C4, S1 e follow-ups C5, C6, L1, A1/A2 corrigidos na branch `fix/mobile-review-findings`. Follow-ups S2, A4/C7, C8 e A5 corrigidos na branch `fix/mobile-review-followups`. Pendências: A3 (camada de models — decisão), S3 (remover debug TEMP — depende do teste no device), C9, L3.
+> **Atualização 2026-07-13:** bloqueadores C1, C2, C3, C4, S1 e follow-ups C5, C6, L1, A1/A2 corrigidos na branch `fix/mobile-review-findings`. Follow-ups S2, A4/C7, C8 e A5 corrigidos na branch `fix/mobile-review-followups`. S3 e C9 corrigidos em `chore/remove-temp-debug` — causa raiz do bug de verificação no device era a SMS region policy do Firebase bloqueando o Brasil (código 17006 `operation-not-allowed`); habilitado BR no console em 2026-07-13 e login validado no emulador. Pendências: A3 (camada de models — decisão), L3 (identidade do app).
 
 **NÃO pronto para produção.** Bloqueiam release, em ordem:
 
