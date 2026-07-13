@@ -32,12 +32,12 @@ void main() {
         routes: [
           GoRoute(
             path: '/phone',
-            builder: (_, __) => BlocProvider<AuthBloc>.value(value: bloc, child: const PhoneScreen()),
+            builder: (_, _) => BlocProvider<AuthBloc>.value(value: bloc, child: const PhoneScreen()),
           ),
-          GoRoute(path: '/otp', builder: (_, __) => const Scaffold(body: Text('OTP_SCREEN'))),
-          GoRoute(path: '/name', builder: (_, __) => const Scaffold(body: Text('NAME_SCREEN'))),
-          GoRoute(path: '/home', builder: (_, __) => const Scaffold(body: Text('HOME_SCREEN'))),
-          GoRoute(path: '/tenant-selection', builder: (_, __) => const Scaffold(body: Text('TENANT'))),
+          GoRoute(path: '/otp', builder: (_, _) => const Scaffold(body: Text('OTP_SCREEN'))),
+          GoRoute(path: '/name', builder: (_, _) => const Scaffold(body: Text('NAME_SCREEN'))),
+          GoRoute(path: '/home', builder: (_, _) => const Scaffold(body: Text('HOME_SCREEN'))),
+          GoRoute(path: '/tenant-selection', builder: (_, _) => const Scaffold(body: Text('TENANT'))),
         ],
       );
 
