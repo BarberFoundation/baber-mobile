@@ -39,25 +39,47 @@ import '../../features/tenant_selection/presentation/tenant_selection_bloc.dart'
 import '../../features/tenant_selection/presentation/tenant_selection_screen.dart';
 import '../../shared/widgets/main_shell.dart';
 
-class _RedirectToServices extends StatefulWidget {
-  const _RedirectToServices();
+class _BookingShell extends StatefulWidget {
+  final Service? initialService;
+  final BookingRepository repository;
+  final Widget child;
+
+  const _BookingShell({required this.initialService, required this.repository, required this.child});
 
   @override
-  State<_RedirectToServices> createState() => _RedirectToServicesState();
+  State<_BookingShell> createState() => _BookingShellState();
 }
 
-class _RedirectToServicesState extends State<_RedirectToServices> {
+class _BookingShellState extends State<_BookingShell> {
+  BookingBloc? _bloc;
+
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) context.go('/services');
-    });
+    final service = widget.initialService;
+    if (service == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/services');
+      });
+    } else {
+      _bloc = BookingBloc(repository: widget.repository, service: service);
+    }
   }
 
   @override
-  Widget build(BuildContext context) =>
-      const Scaffold(body: Center(child: CircularProgressIndicator()));
+  void dispose() {
+    _bloc?.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bloc = _bloc;
+    if (bloc == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return BlocProvider.value(value: bloc, child: widget.child);
+  }
 }
 
 GoRouter buildAppRouter({
@@ -159,15 +181,16 @@ GoRouter buildAppRouter({
       ),
       ShellRoute(
         builder: (context, state, child) {
-          final service = state.extra;
-          // Restore de processo (Android mata o app em background) perde o
-          // extra — go_router não serializa objetos. Volta pro catálogo em
-          // vez de TypeError no boot da rota (C8).
-          if (service is! Service) {
-            return const _RedirectToServices();
-          }
-          return BlocProvider(
-            create: (_) => BookingBloc(repository: bookingRepository, service: service),
+          // Só o push de entrada (/booking/date) carrega o Service; pushes
+          // internos (slots/confirm/success) re-rodam este builder com extra
+          // null, então o shell captura o service do PRIMEIRO build e o
+          // mantém pelo fluxo. Sem service no primeiro build = restore de
+          // processo (go_router não serializa objetos) → volta pro catálogo
+          // em vez de TypeError (C8).
+          final extra = state.extra;
+          return _BookingShell(
+            initialService: extra is Service ? extra : null,
+            repository: bookingRepository,
             child: child,
           );
         },
