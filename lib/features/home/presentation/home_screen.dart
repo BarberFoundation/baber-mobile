@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
-import '../../../core/auth/token_storage.dart';
-import '../../../core/tenancy/tenant_storage.dart';
+import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/stripe_bar.dart';
@@ -11,10 +10,7 @@ import 'home_event.dart';
 import 'home_state.dart';
 
 class HomeScreen extends StatefulWidget {
-  final TokenStorage tokenStorage;
-  final TenantStorage tenantStorage;
-
-  const HomeScreen({super.key, required this.tokenStorage, required this.tenantStorage});
+  const HomeScreen({super.key});
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -40,14 +36,9 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
     if (confirmed == true && context.mounted) {
-      await _logout(context);
+      await context.read<SessionCubit>().logout();
+      if (context.mounted) context.go('/tenant-selection');
     }
-  }
-
-  Future<void> _logout(BuildContext context) async {
-    await widget.tokenStorage.clear();
-    await widget.tenantStorage.clear();
-    if (context.mounted) context.go('/tenant-selection');
   }
 
   @override
@@ -70,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
             );
             // Sessão expirada não apaga o tenant: o usuário volta pro login do
             // mesmo salão. Logout manual continua indo para /tenant-selection.
-            widget.tokenStorage.clear();
+            context.read<SessionCubit>().expireTokens();
             context.go('/phone');
           }
         },

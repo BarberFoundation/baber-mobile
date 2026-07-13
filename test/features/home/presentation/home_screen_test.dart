@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:baber_mobile/core/auth/session_cubit.dart';
 import 'package:baber_mobile/core/auth/token_storage.dart';
 import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment.dart';
@@ -39,9 +40,14 @@ void main() {
       routes: [
         GoRoute(
           path: '/home',
-          builder: (context, state) => BlocProvider<HomeBloc>.value(
-            value: bloc,
-            child: HomeScreen(tokenStorage: tokenStorage, tenantStorage: tenantStorage),
+          builder: (context, state) => MultiBlocProvider(
+            providers: [
+              BlocProvider<HomeBloc>.value(value: bloc),
+              BlocProvider(
+                create: (_) => SessionCubit(tokenStorage: tokenStorage, tenantStorage: tenantStorage),
+              ),
+            ],
+            child: const HomeScreen(),
           ),
         ),
         GoRoute(path: '/tenant-selection', builder: (context, state) => const Scaffold(body: Text('tenant selection'))),

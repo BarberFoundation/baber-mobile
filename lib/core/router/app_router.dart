@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart' hide State;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../auth/session_cubit.dart';
 import '../auth/token_storage.dart';
 import '../error/failure.dart';
 import '../tenancy/tenant_storage.dart';
@@ -109,13 +110,20 @@ GoRouter buildAppRouter({
           StatefulShellBranch(routes: [
             GoRoute(
               path: '/home',
-              builder: (context, state) => BlocProvider(
-                create: (_) => HomeBloc(
-                  profileRepository: profileRepository,
-                  appointmentRepository: appointmentRepository,
-                  serviceRepository: serviceRepository,
-                ),
-                child: HomeScreen(tokenStorage: tokenStorage, tenantStorage: tenantStorage),
+              builder: (context, state) => MultiBlocProvider(
+                providers: [
+                  BlocProvider(
+                    create: (_) => HomeBloc(
+                      profileRepository: profileRepository,
+                      appointmentRepository: appointmentRepository,
+                      serviceRepository: serviceRepository,
+                    ),
+                  ),
+                  BlocProvider(
+                    create: (_) => SessionCubit(tokenStorage: tokenStorage, tenantStorage: tenantStorage),
+                  ),
+                ],
+                child: const HomeScreen(),
               ),
             ),
           ]),
