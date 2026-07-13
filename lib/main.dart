@@ -1,11 +1,13 @@
 import 'package:app_links/app_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'baber_app.dart';
 import 'core/api/api_client.dart';
 import 'core/auth/token_storage.dart';
+import 'core/config/base_url_guard.dart';
 import 'core/firebase/firebase_auth_gateway.dart';
 import 'core/tenancy/tenant_storage.dart';
 import 'features/appointments/data/appointment_repository_impl.dart';
@@ -27,6 +29,7 @@ void main() async {
   // API_BASE_URL is the host only; the backend serves everything (except
   // /health) under the global "api" prefix with URI versioning (v1).
   const apiHost = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
+  assertSecureBaseUrl(apiHost, isRelease: kReleaseMode);
   final apiClient = ApiClient(
     baseUrl: '$apiHost/api/v1',
     tokenStorage: tokenStorage,
