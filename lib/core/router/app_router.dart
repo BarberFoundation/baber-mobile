@@ -28,6 +28,15 @@ import '../../features/catalog/presentation/services_bloc.dart';
 import '../../features/catalog/presentation/services_list_screen.dart';
 import '../../features/home/presentation/home_bloc.dart';
 import '../../features/home/presentation/home_screen.dart';
+import '../../features/loyalty/domain/loyalty_repository.dart';
+import '../../features/loyalty/domain/subscription_tier_view.dart';
+import '../../features/loyalty/presentation/activate_subscription_bloc.dart';
+import '../../features/loyalty/presentation/activate_subscription_screen.dart';
+import '../../features/loyalty/presentation/loyalty_bloc.dart';
+import '../../features/loyalty/presentation/loyalty_event.dart';
+import '../../features/loyalty/presentation/loyalty_hub_screen.dart';
+import '../../features/loyalty/presentation/subscription_plans_bloc.dart';
+import '../../features/loyalty/presentation/subscription_plans_screen.dart';
 import '../../features/notifications/domain/notifications_repository.dart';
 import '../../features/notifications/presentation/notifications_bloc.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
@@ -82,6 +91,37 @@ class _BookingShellState extends State<_BookingShell> {
   }
 }
 
+class _ActivateSubscriptionGuard extends StatefulWidget {
+  final SubscriptionTierView? tier;
+  final Widget Function(SubscriptionTierView tier) builder;
+
+  const _ActivateSubscriptionGuard({required this.tier, required this.builder});
+
+  @override
+  State<_ActivateSubscriptionGuard> createState() => _ActivateSubscriptionGuardState();
+}
+
+class _ActivateSubscriptionGuardState extends State<_ActivateSubscriptionGuard> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.tier == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/loyalty/plans');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final tier = widget.tier;
+    if (tier == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return widget.builder(tier);
+  }
+}
+
 GoRouter buildAppRouter({
   required TokenStorage tokenStorage,
   required TenantStorage tenantStorage,
@@ -90,6 +130,7 @@ GoRouter buildAppRouter({
   required ServiceRepository serviceRepository,
   required BookingRepository bookingRepository,
   required AppointmentRepository appointmentRepository,
+  required LoyaltyRepository loyaltyRepository,
   required NotificationsRepository notificationsRepository,
   required ProfileRepository profileRepository,
   required AppLinks appLinks,
@@ -178,6 +219,49 @@ GoRouter buildAppRouter({
           create: (_) => ServicesBloc(repository: serviceRepository),
           child: const ServicesListScreen(),
         ),
+      ),
+      GoRoute(
+        path: '/loyalty',
+        builder: (context, state) => BlocProvider(
+          create: (_) => LoyaltyBloc(repository: loyaltyRepository, serviceRepository: serviceRepository)
+            ..add(LoadLoyaltyHub()),
+          child: const LoyaltyHubScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/loyalty/plans',
+        builder: (context, state) => BlocProvider(
+          create: (_) => SubscriptionPlansBloc(repository: loyaltyRepository),
+          child: const SubscriptionPlansScreen(),
+        ),
+      ),
+      GoRoute(
+        path: '/loyalty/activate',
+        builder: (context, state) {
+          final extra = state.extra;
+          final tier = extra is SubscriptionTierView ? extra : null;
+          return _ActivateSubscriptionGuard(
+            tier: tier,
+            builder: (tier) => FutureBuilder<Either<Failure, AuthUser>>(
+              future: profileRepository.getMe(),
+              builder: (context, snapshot) {
+                if (!snapshot.hasData) {
+                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
+                }
+                return snapshot.data!.fold(
+                  (_) => BlocProvider(
+                    create: (_) => ActivateSubscriptionBloc(repository: loyaltyRepository, tier: tier),
+                    child: ActivateSubscriptionScreen(tier: tier, initialName: '', initialPhone: ''),
+                  ),
+                  (user) => BlocProvider(
+                    create: (_) => ActivateSubscriptionBloc(repository: loyaltyRepository, tier: tier),
+                    child: ActivateSubscriptionScreen(tier: tier, initialName: user.name ?? '', initialPhone: user.phone),
+                  ),
+                );
+              },
+            ),
+          );
+        },
       ),
       ShellRoute(
         builder: (context, state, child) {
