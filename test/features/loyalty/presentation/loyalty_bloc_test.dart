@@ -45,6 +45,10 @@ void main() {
 
   LoyaltyBloc build() => LoyaltyBloc(repository: repository, serviceRepository: serviceRepository);
 
+  test('starts in a loading state before any event', () {
+    expect(build().state, const LoyaltyState(isLoading: true));
+  });
+
   blocTest<LoyaltyBloc, LoyaltyState>(
     'emits [loading, loaded without subscription] when the client never subscribed',
     build: () {

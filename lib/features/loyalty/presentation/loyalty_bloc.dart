@@ -11,7 +11,8 @@ class LoyaltyBloc extends Bloc<LoyaltyEvent, LoyaltyState> {
   final LoyaltyRepository repository;
   final ServiceRepository serviceRepository;
 
-  LoyaltyBloc({required this.repository, required this.serviceRepository}) : super(const LoyaltyState()) {
+  LoyaltyBloc({required this.repository, required this.serviceRepository})
+      : super(const LoyaltyState(isLoading: true)) {
     // Handler único com sequential() (bloc_concurrency): processa um evento
     // por vez, na ordem em que chegaram, esperando o handler anterior
     // terminar antes de começar o próximo. Necessário porque o transformer
