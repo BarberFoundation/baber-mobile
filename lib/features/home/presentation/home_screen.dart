@@ -115,6 +115,22 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: _ShortcutTile(
+                      icon: Icons.workspace_premium_outlined,
+                      label: 'Clube',
+                      onTap: () => context.push('/loyalty'),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(child: SizedBox.shrink()),
+                  const SizedBox(width: 12),
+                  const Expanded(child: SizedBox.shrink()),
+                ],
+              ),
             ],
           );
         },
