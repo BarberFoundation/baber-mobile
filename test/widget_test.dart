@@ -9,6 +9,7 @@ import 'package:baber_mobile/features/appointments/domain/appointment_repository
 import 'package:baber_mobile/features/auth/domain/auth_repository.dart';
 import 'package:baber_mobile/features/booking/domain/booking_repository.dart';
 import 'package:baber_mobile/features/catalog/domain/service_repository.dart';
+import 'package:baber_mobile/features/loyalty/domain/loyalty_repository.dart';
 import 'package:baber_mobile/features/notifications/domain/notifications_repository.dart';
 import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 import 'package:baber_mobile/features/tenant_selection/domain/tenant.dart';
@@ -20,6 +21,7 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 class MockTenantRepository extends Mock implements TenantRepository {}
 class MockServiceRepository extends Mock implements ServiceRepository {}
 class MockBookingRepository extends Mock implements BookingRepository {}
+class MockLoyaltyRepository extends Mock implements LoyaltyRepository {}
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 class MockNotificationsRepository extends Mock implements NotificationsRepository {}
 class MockProfileRepository extends Mock implements ProfileRepository {}
@@ -44,6 +46,7 @@ void main() {
       tenantRepository: tenantRepository,
       serviceRepository: MockServiceRepository(),
       bookingRepository: MockBookingRepository(),
+      loyaltyRepository: MockLoyaltyRepository(),
       appointmentRepository: MockAppointmentRepository(),
       notificationsRepository: MockNotificationsRepository(),
       profileRepository: MockProfileRepository(),

@@ -14,6 +14,7 @@ import 'features/appointments/data/appointment_repository_impl.dart';
 import 'features/auth/data/auth_repository_impl.dart';
 import 'features/booking/data/booking_repository_impl.dart';
 import 'features/catalog/data/service_repository_impl.dart';
+import 'features/loyalty/data/loyalty_repository_impl.dart';
 import 'features/notifications/data/notifications_repository_impl.dart';
 import 'features/profile/data/profile_repository_impl.dart';
 import 'features/tenant_selection/data/tenant_repository_impl.dart';
@@ -40,6 +41,7 @@ void main() async {
   final tenantRepository = TenantRepositoryImpl(apiClient.dio);
   final serviceRepository = ServiceRepositoryImpl(apiClient.dio);
   final bookingRepository = BookingRepositoryImpl(apiClient.dio);
+  final loyaltyRepository = LoyaltyRepositoryImpl(apiClient.dio);
   final appointmentRepository = AppointmentRepositoryImpl(apiClient.dio);
   final notificationsRepository = NotificationsRepositoryImpl(apiClient.dio);
   final profileRepository = ProfileRepositoryImpl(apiClient.dio);
@@ -51,6 +53,7 @@ void main() async {
     tenantRepository: tenantRepository,
     serviceRepository: serviceRepository,
     bookingRepository: bookingRepository,
+    loyaltyRepository: loyaltyRepository,
     appointmentRepository: appointmentRepository,
     notificationsRepository: notificationsRepository,
     profileRepository: profileRepository,
