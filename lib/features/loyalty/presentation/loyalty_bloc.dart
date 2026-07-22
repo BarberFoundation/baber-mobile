@@ -1,3 +1,4 @@
+import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../core/error/failure_message.dart';
 import '../../catalog/domain/service_repository.dart';
@@ -11,13 +12,20 @@ class LoyaltyBloc extends Bloc<LoyaltyEvent, LoyaltyState> {
   final ServiceRepository serviceRepository;
 
   LoyaltyBloc({required this.repository, required this.serviceRepository}) : super(const LoyaltyState()) {
-    // Handler único com transformer sequencial (asyncExpand pausa a
-    // subscription até o handler anterior terminar). Isso é necessário
-    // porque o transformer padrão do Bloc roda cada `on<E>` numa subscription
-    // independente do mesmo stream — eventos de tipos diferentes (ex.:
-    // LoadLoyaltyHub seguido de RedeemAllCreditRequested) processariam em
-    // paralelo e a ação leria o estado antigo (ainda sem stampCard/subscription).
-    on<LoyaltyEvent>(_onEvent, transformer: (events, mapper) => events.asyncExpand(mapper));
+    // Handler único com sequential() (bloc_concurrency): processa um evento
+    // por vez, na ordem em que chegaram, esperando o handler anterior
+    // terminar antes de começar o próximo. Necessário porque o transformer
+    // padrão do Bloc roda cada `on<E>` numa subscription independente do
+    // mesmo stream — eventos de tipos diferentes (ex.: LoadLoyaltyHub seguido
+    // de RedeemAllCreditRequested) processariam em paralelo e a ação leria o
+    // estado antigo (ainda sem stampCard/subscription).
+    //
+    // Nota de alcance prático: hoje a UI trava os botões de ação atrás de
+    // `isLoading`, então essa corrida não é disparável por um toque real do
+    // usuário no momento — o fix protege principalmente mudanças futuras de
+    // UI e a suíte de testes (que dispara os eventos back-to-back sem
+    // aguardar), não um bug hoje alcançável em produção.
+    on<LoyaltyEvent>(_onEvent, transformer: sequential());
   }
 
   Future<void> _onEvent(LoyaltyEvent event, Emitter<LoyaltyState> emit) async {
