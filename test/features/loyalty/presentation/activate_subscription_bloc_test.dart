@@ -5,6 +5,7 @@ import 'package:mocktail/mocktail.dart';
 import 'package:baber_mobile/core/error/failure.dart';
 import 'package:baber_mobile/features/loyalty/domain/club_subscription.dart';
 import 'package:baber_mobile/features/loyalty/domain/loyalty_repository.dart';
+import 'package:baber_mobile/features/loyalty/domain/pix_payment.dart';
 import 'package:baber_mobile/features/loyalty/domain/subscription_tier_view.dart';
 import 'package:baber_mobile/features/loyalty/presentation/activate_subscription_bloc.dart';
 import 'package:baber_mobile/features/loyalty/presentation/activate_subscription_event.dart';
@@ -36,7 +37,7 @@ void main() {
   );
 
   blocTest<ActivateSubscriptionBloc, ActivateSubscriptionState>(
-    'emits [loading, activated] when activation succeeds',
+    'emits [loading, activated] with no pixPayment when activation succeeds without a charge',
     build: () {
       when(() => repository.activateSubscription(
             tier: 'ESSENCIAL',
@@ -44,13 +45,38 @@ void main() {
             cpfCnpj: '12345678900',
             email: null,
             phone: null,
-          )).thenAnswer((_) async => const Right(subscription));
+          )).thenAnswer((_) async => const Right(ActivationResult(subscription: subscription, payment: null)));
       return ActivateSubscriptionBloc(repository: repository, tier: tier);
     },
     act: (bloc) => bloc.add(const ActivateSubmitted(name: 'Fulano', cpfCnpj: '12345678900')),
     expect: () => [
       const ActivateSubscriptionState(isLoading: true),
       const ActivateSubscriptionState(activated: true),
+    ],
+  );
+
+  blocTest<ActivateSubscriptionBloc, ActivateSubscriptionState>(
+    'emits [loading, activated] with pixPayment when activation succeeds with a pro-rata charge',
+    build: () {
+      const payment = PixPayment(
+        paymentId: 'pay_1', encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01',
+      );
+      when(() => repository.activateSubscription(
+            tier: 'ESSENCIAL',
+            name: 'Fulano',
+            cpfCnpj: '12345678900',
+            email: null,
+            phone: null,
+          )).thenAnswer((_) async => const Right(ActivationResult(subscription: subscription, payment: payment)));
+      return ActivateSubscriptionBloc(repository: repository, tier: tier);
+    },
+    act: (bloc) => bloc.add(const ActivateSubmitted(name: 'Fulano', cpfCnpj: '12345678900')),
+    expect: () => [
+      const ActivateSubscriptionState(isLoading: true),
+      const ActivateSubscriptionState(
+        activated: true,
+        pixPayment: PixPayment(paymentId: 'pay_1', encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01'),
+      ),
     ],
   );
 

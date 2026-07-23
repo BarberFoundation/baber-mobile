@@ -25,7 +25,7 @@ class ActivateSubscriptionBloc extends Bloc<ActivateSubscriptionEvent, ActivateS
     );
     result.fold(
       (failure) => emit(state.copyWith(errorMessage: failureMessage(failure))),
-      (_) => emit(state.copyWith(activated: true)),
+      (activation) => emit(state.copyWith(activated: true, pixPayment: activation.payment)),
     );
   }
 }
