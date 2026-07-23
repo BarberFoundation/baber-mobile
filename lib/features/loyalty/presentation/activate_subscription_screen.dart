@@ -85,7 +85,7 @@ class _ActivateSubscriptionScreenState extends State<ActivateSubscriptionScreen>
           if (state.activated) {
             final payment = state.pixPayment;
             if (payment != null) {
-              context.go('/loyalty/pix-payment', extra: payment);
+              context.push('/loyalty/pix-payment', extra: payment);
             } else {
               context.go('/loyalty');
             }
