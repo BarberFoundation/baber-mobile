@@ -4,6 +4,7 @@ import '../../../core/error/dio_failure_mapper.dart';
 import '../../../core/error/failure.dart';
 import '../domain/club_subscription.dart';
 import '../domain/loyalty_repository.dart';
+import '../domain/pix_payment.dart';
 import '../domain/stamp_card.dart';
 import '../domain/subscription_tier_view.dart';
 
@@ -58,7 +59,7 @@ class LoyaltyRepositoryImpl implements LoyaltyRepository {
   }
 
   @override
-  Future<Either<Failure, ClubSubscription>> activateSubscription({
+  Future<Either<Failure, ActivationResult>> activateSubscription({
     required String tier,
     required String name,
     required String cpfCnpj,
@@ -73,7 +74,19 @@ class LoyaltyRepositoryImpl implements LoyaltyRepository {
         if (email != null && email.isNotEmpty) 'email': email,
         if (phone != null && phone.isNotEmpty) 'phone': phone,
       });
-      return Right(ClubSubscription.fromJson(response.data as Map<String, dynamic>));
+      final json = response.data as Map<String, dynamic>;
+      final payment = json['payment'] != null ? PixPayment.fromJson(json['payment'] as Map<String, dynamic>) : null;
+      return Right(ActivationResult(subscription: ClubSubscription.fromJson(json), payment: payment));
+    } on DioException catch (e) {
+      return Left(mapDioError(e));
+    }
+  }
+
+  @override
+  Future<Either<Failure, String>> getPaymentStatus(String paymentId) async {
+    try {
+      final response = await _dio.get('/loyalty/club-subscription/payments/$paymentId/status');
+      return Right((response.data as Map<String, dynamic>)['status'] as String);
     } on DioException catch (e) {
       return Left(mapDioError(e));
     }
