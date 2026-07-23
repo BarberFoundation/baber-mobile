@@ -142,7 +142,51 @@ void main() {
 
     final result = await repository.activateSubscription(tier: 'ESSENCIAL', name: 'Fulano', cpfCnpj: '12345678900');
 
-    result.fold((_) => fail('expected right'), (subscription) => expect(subscription.status, 'ACTIVE'));
+    result.fold((_) => fail('expected right'), (activation) {
+      expect(activation.subscription.status, 'ACTIVE');
+      expect(activation.payment, isNull);
+    });
+  });
+
+  test('activateSubscription returns Right with a PixPayment when the response includes a charge', () async {
+    when(() => dio.post('/loyalty/club-subscription/activate', data: {
+          'tier': 'ESSENCIAL',
+          'name': 'Fulano',
+          'cpfCnpj': '12345678900',
+        })).thenAnswer((_) async => Response(
+          requestOptions: RequestOptions(path: '/loyalty/club-subscription/activate'),
+          statusCode: 201,
+          data: {
+            'status': 'ACTIVE',
+            'tierId': 'tier-1',
+            'currentCycleStart': '2026-07-01',
+            'currentCycleEnd': '2026-07-31',
+            'quotas': <dynamic>[],
+            'payment': {
+              'paymentId': 'pay_1',
+              'pix': {'encodedImage': 'img', 'payload': 'copia-e-cola', 'expirationDate': '2027-01-01'},
+            },
+          },
+        ));
+
+    final result = await repository.activateSubscription(tier: 'ESSENCIAL', name: 'Fulano', cpfCnpj: '12345678900');
+
+    result.fold((_) => fail('expected right'), (activation) {
+      expect(activation.payment?.paymentId, 'pay_1');
+      expect(activation.payment?.encodedImage, 'img');
+    });
+  });
+
+  test('getPaymentStatus GETs the status endpoint and returns Right with the status string', () async {
+    when(() => dio.get('/loyalty/club-subscription/payments/pay_1/status')).thenAnswer((_) async => Response(
+          requestOptions: RequestOptions(path: '/loyalty/club-subscription/payments/pay_1/status'),
+          statusCode: 200,
+          data: {'status': 'RECEIVED'},
+        ));
+
+    final result = await repository.getPaymentStatus('pay_1');
+
+    result.fold((_) => fail('expected right'), (status) => expect(status, 'RECEIVED'));
   });
 
   test('cancelSubscription posts and returns Right on 204', () async {
