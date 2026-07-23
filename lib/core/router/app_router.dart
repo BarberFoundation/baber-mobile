@@ -29,12 +29,15 @@ import '../../features/catalog/presentation/services_list_screen.dart';
 import '../../features/home/presentation/home_bloc.dart';
 import '../../features/home/presentation/home_screen.dart';
 import '../../features/loyalty/domain/loyalty_repository.dart';
+import '../../features/loyalty/domain/pix_payment.dart';
 import '../../features/loyalty/domain/subscription_tier_view.dart';
 import '../../features/loyalty/presentation/activate_subscription_bloc.dart';
 import '../../features/loyalty/presentation/activate_subscription_screen.dart';
 import '../../features/loyalty/presentation/loyalty_bloc.dart';
 import '../../features/loyalty/presentation/loyalty_event.dart';
 import '../../features/loyalty/presentation/loyalty_hub_screen.dart';
+import '../../features/loyalty/presentation/pix_payment_bloc.dart';
+import '../../features/loyalty/presentation/pix_payment_screen.dart';
 import '../../features/loyalty/presentation/subscription_plans_bloc.dart';
 import '../../features/loyalty/presentation/subscription_plans_screen.dart';
 import '../../features/notifications/domain/notifications_repository.dart';
@@ -260,6 +263,16 @@ GoRouter buildAppRouter({
                 );
               },
             ),
+          );
+        },
+      ),
+      GoRoute(
+        path: '/loyalty/pix-payment',
+        builder: (context, state) {
+          final payment = state.extra as PixPayment;
+          return BlocProvider(
+            create: (_) => PixPaymentBloc(repository: loyaltyRepository, paymentId: payment.paymentId),
+            child: PixPaymentScreen(payment: payment),
           );
         },
       ),
