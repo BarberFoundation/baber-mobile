@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../domain/subscription_tier_view.dart';
+import '../../../core/validation/cpf_cnpj_validator.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import 'activate_subscription_bloc.dart';
 import 'activate_subscription_event.dart';
@@ -54,8 +55,7 @@ class _ActivateSubscriptionScreenState extends State<ActivateSubscriptionScreen>
   }
 
   String? _validateCpfCnpj(String? value) {
-    final digits = (value ?? '').replaceAll(RegExp(r'\D'), '');
-    if (digits.length != 11 && digits.length != 14) return 'Informe um CPF ou CNPJ válido';
+    if (!isValidCpfCnpj(value ?? '')) return 'Informe um CPF ou CNPJ válido';
     return null;
   }
 

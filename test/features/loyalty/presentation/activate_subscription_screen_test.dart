@@ -62,13 +62,13 @@ void main() {
     await tester.pumpWidget(wrap(
       const ActivateSubscriptionScreen(tier: tier, initialName: 'Fulano', initialPhone: '11999998888'),
     ));
-    await tester.enterText(find.widgetWithText(TextFormField, 'CPF ou CNPJ'), '12345678900');
+    await tester.enterText(find.widgetWithText(TextFormField, 'CPF ou CNPJ'), '11144477735');
     await tester.tap(find.text('Assinar'));
     await tester.pump();
 
     verify(() => bloc.add(const ActivateSubmitted(
           name: 'Fulano',
-          cpfCnpj: '12345678900',
+          cpfCnpj: '11144477735',
           email: null,
           phone: '11999998888',
         ))).called(1);
