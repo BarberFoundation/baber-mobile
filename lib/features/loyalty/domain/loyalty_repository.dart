@@ -22,7 +22,7 @@ abstract class LoyaltyRepository {
   Future<Either<Failure, ClubSubscription?>> getMySubscription();
   Future<Either<Failure, List<SubscriptionTierView>>> getAvailableTiers();
   Future<Either<Failure, ActivationResult>> activateSubscription({
-    required String tier,
+    required String tierId,
     required String name,
     required String cpfCnpj,
     String? email,

@@ -60,7 +60,7 @@ class LoyaltyRepositoryImpl implements LoyaltyRepository {
 
   @override
   Future<Either<Failure, ActivationResult>> activateSubscription({
-    required String tier,
+    required String tierId,
     required String name,
     required String cpfCnpj,
     String? email,
@@ -68,7 +68,7 @@ class LoyaltyRepositoryImpl implements LoyaltyRepository {
   }) async {
     try {
       final response = await _dio.post('/loyalty/club-subscription/activate', data: {
-        'tier': tier,
+        'tierId': tierId,
         'name': name,
         'cpfCnpj': cpfCnpj,
         if (email != null && email.isNotEmpty) 'email': email,

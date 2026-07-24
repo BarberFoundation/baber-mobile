@@ -22,7 +22,7 @@ void main() {
 
   const tier = SubscriptionTierView(
     id: 'tier-1',
-    tier: 'ESSENCIAL',
+    name: 'ESSENCIAL',
     services: [TierServiceItem(serviceId: 'svc-1', quantity: 2, priceInCents: 4000)],
     monthlyPriceInCents: 8000,
     discountPercentage: 0,
@@ -40,7 +40,7 @@ void main() {
     'emits [loading, activated] with no pixPayment when activation succeeds without a charge',
     build: () {
       when(() => repository.activateSubscription(
-            tier: 'ESSENCIAL',
+            tierId: 'tier-1',
             name: 'Fulano',
             cpfCnpj: '12345678900',
             email: null,
@@ -62,7 +62,7 @@ void main() {
         paymentId: 'pay_1', encodedImage: 'img', payload: 'copia-e-cola', expirationDate: '2027-01-01',
       );
       when(() => repository.activateSubscription(
-            tier: 'ESSENCIAL',
+            tierId: 'tier-1',
             name: 'Fulano',
             cpfCnpj: '12345678900',
             email: null,
@@ -84,7 +84,7 @@ void main() {
     'emits [loading, error] when activation fails',
     build: () {
       when(() => repository.activateSubscription(
-            tier: 'ESSENCIAL',
+            tierId: 'tier-1',
             name: 'Fulano',
             cpfCnpj: '12345678900',
             email: null,

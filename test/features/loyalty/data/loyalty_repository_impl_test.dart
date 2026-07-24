@@ -104,7 +104,7 @@ void main() {
           data: [
             {
               'id': 'tier-1',
-              'tier': 'ESSENCIAL',
+              'name': 'Essencial',
               'services': [
                 {'serviceId': 'svc-1', 'quantity': 2, 'priceInCents': 3500},
               ],
@@ -118,14 +118,14 @@ void main() {
 
     result.fold((_) => fail('expected right'), (tiers) {
       expect(tiers, hasLength(1));
-      expect(tiers[0].tier, 'ESSENCIAL');
+      expect(tiers[0].name, 'Essencial');
       expect(tiers[0].formattedMonthlyPrice, 'R\$ 70,00');
     });
   });
 
   test('activateSubscription posts the form and returns Right with the subscription', () async {
     when(() => dio.post('/loyalty/club-subscription/activate', data: {
-          'tier': 'ESSENCIAL',
+          'tierId': 'tier-1',
           'name': 'Fulano',
           'cpfCnpj': '12345678900',
         })).thenAnswer((_) async => Response(
@@ -140,7 +140,7 @@ void main() {
           },
         ));
 
-    final result = await repository.activateSubscription(tier: 'ESSENCIAL', name: 'Fulano', cpfCnpj: '12345678900');
+    final result = await repository.activateSubscription(tierId: 'tier-1', name: 'Fulano', cpfCnpj: '12345678900');
 
     result.fold((_) => fail('expected right'), (activation) {
       expect(activation.subscription.status, 'ACTIVE');
@@ -150,7 +150,7 @@ void main() {
 
   test('activateSubscription returns Right with a PixPayment when the response includes a charge', () async {
     when(() => dio.post('/loyalty/club-subscription/activate', data: {
-          'tier': 'ESSENCIAL',
+          'tierId': 'tier-1',
           'name': 'Fulano',
           'cpfCnpj': '12345678900',
         })).thenAnswer((_) async => Response(
@@ -169,7 +169,7 @@ void main() {
           },
         ));
 
-    final result = await repository.activateSubscription(tier: 'ESSENCIAL', name: 'Fulano', cpfCnpj: '12345678900');
+    final result = await repository.activateSubscription(tierId: 'tier-1', name: 'Fulano', cpfCnpj: '12345678900');
 
     result.fold((_) => fail('expected right'), (activation) {
       expect(activation.payment?.paymentId, 'pay_1');

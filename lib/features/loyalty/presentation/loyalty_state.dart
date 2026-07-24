@@ -44,7 +44,7 @@ class LoyaltyState extends Equatable {
 
   String? tierNameFor(String tierId) {
     for (final t in tiers) {
-      if (t.id == tierId) return t.tier;
+      if (t.id == tierId) return t.name;
     }
     return null;
   }

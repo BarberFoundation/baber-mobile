@@ -74,7 +74,7 @@ class _ActivateSubscriptionScreenState extends State<ActivateSubscriptionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: BarberAppBar(title: 'Assinar ${widget.tier.tier}'),
+      appBar: BarberAppBar(title: 'Assinar ${widget.tier.name}'),
       body: BlocConsumer<ActivateSubscriptionBloc, ActivateSubscriptionState>(
         listener: (context, state) {
           if (state.errorMessage != null) {

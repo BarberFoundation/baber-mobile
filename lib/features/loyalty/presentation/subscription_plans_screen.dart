@@ -58,7 +58,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(tier.tier, style: Theme.of(context).textTheme.titleMedium),
+                      Text(tier.name, style: Theme.of(context).textTheme.titleMedium),
                       const SizedBox(height: 4),
                       Text(
                         '${tier.formattedMonthlyPrice} / mês',

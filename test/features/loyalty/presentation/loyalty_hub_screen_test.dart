@@ -86,7 +86,7 @@ void main() {
       const Stream<LoyaltyState>.empty(),
       initialState: const LoyaltyState(
         subscription: subscription,
-        tiers: [SubscriptionTierView(id: 'tier-1', tier: 'ESSENCIAL', services: [], monthlyPriceInCents: 8000, discountPercentage: 0)],
+        tiers: [SubscriptionTierView(id: 'tier-1', name: 'ESSENCIAL', services: [], monthlyPriceInCents: 8000, discountPercentage: 0)],
         services: [Service(id: 'svc-1', name: 'Corte', priceInCents: 4000, durationMinutes: 30)],
       ),
     );

@@ -17,7 +17,7 @@ class ActivateSubscriptionBloc extends Bloc<ActivateSubscriptionEvent, ActivateS
   Future<void> _onSubmit(ActivateSubmitted event, Emitter<ActivateSubscriptionState> emit) async {
     emit(state.copyWith(isLoading: true));
     final result = await repository.activateSubscription(
-      tier: tier.tier,
+      tierId: tier.id,
       name: event.name,
       cpfCnpj: event.cpfCnpj,
       email: event.email,

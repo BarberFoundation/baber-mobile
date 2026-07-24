@@ -19,14 +19,14 @@ class TierServiceItem extends Equatable {
 
 class SubscriptionTierView extends Equatable {
   final String id;
-  final String tier;
+  final String name;
   final List<TierServiceItem> services;
   final int monthlyPriceInCents;
   final int discountPercentage;
 
   const SubscriptionTierView({
     required this.id,
-    required this.tier,
+    required this.name,
     required this.services,
     required this.monthlyPriceInCents,
     required this.discountPercentage,
@@ -34,7 +34,7 @@ class SubscriptionTierView extends Equatable {
 
   factory SubscriptionTierView.fromJson(Map<String, dynamic> json) => SubscriptionTierView(
         id: json['id'] as String,
-        tier: json['tier'] as String,
+        name: json['name'] as String,
         services: (json['services'] as List)
             .map((s) => TierServiceItem.fromJson(s as Map<String, dynamic>))
             .toList(),
@@ -48,5 +48,5 @@ class SubscriptionTierView extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, tier, services, monthlyPriceInCents, discountPercentage];
+  List<Object?> get props => [id, name, services, monthlyPriceInCents, discountPercentage];
 }

@@ -25,7 +25,7 @@ void main() {
   const service = Service(id: 'svc-1', name: 'Corte', priceInCents: 4000, durationMinutes: 30);
   const tier = SubscriptionTierView(
     id: 'tier-1',
-    tier: 'ESSENCIAL',
+    name: 'ESSENCIAL',
     services: [TierServiceItem(serviceId: 'svc-1', quantity: 2, priceInCents: 4000)],
     monthlyPriceInCents: 8000,
     discountPercentage: 0,
