@@ -17,6 +17,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<PhoneVerificationFailed>(_onPhoneVerificationFailed);
     on<CodeSubmitted>(_onCodeSubmitted);
     on<NameSubmitted>(_onNameSubmitted);
+    on<GoogleSignInSubmitted>(_onGoogleSignInSubmitted);
   }
 
   Future<void> _onPhoneSubmitted(PhoneSubmitted event, Emitter<AuthState> emit) async {
@@ -64,6 +65,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     result.fold(
       (failure) => emit(state.copyWith(errorMessage: failureMessage(failure))),
       (user) => emit(state.copyWith(authenticatedUser: user)),
+    );
+  }
+
+  Future<void> _onGoogleSignInSubmitted(GoogleSignInSubmitted event, Emitter<AuthState> emit) async {
+    emit(state.copyWith(isLoading: true));
+    final result = await repository.signInWithGoogle();
+    await result.fold(
+      (failure) async => emit(state.copyWith(errorMessage: failureMessage(failure))),
+      (authResult) async {
+        if (authResult == null) {
+          emit(state.copyWith()); // usuário cancelou — limpa loading sem erro
+        } else {
+          await _completeLogin(authResult, emit);
+        }
+      },
     );
   }
 

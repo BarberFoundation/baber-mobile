@@ -59,3 +59,7 @@ class PhoneVerificationFailed extends AuthEvent {
   @override
   List<Object?> get props => [failure];
 }
+
+class GoogleSignInSubmitted extends AuthEvent {
+  const GoogleSignInSubmitted();
+}

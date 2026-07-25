@@ -38,8 +38,8 @@ void main() {
     final tokenStorage = MockTokenStorage();
     final tenantStorage = MockTenantStorage();
     final appLinks = MockAppLinks();
-    when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => null);
-    when(() => tenantStorage.readTenantId()).thenAnswer((_) async => null);
+    when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => 'fake-token');
+    when(() => tenantStorage.readTenantId()).thenAnswer((_) async => 'tenant-1');
     when(() => appLinks.getInitialLink()).thenAnswer((_) async => null);
 
     return buildAppRouter(

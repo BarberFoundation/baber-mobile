@@ -1,6 +1,7 @@
 import 'package:app_links/app_links.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -36,7 +37,7 @@ void main() async {
     tokenStorage: tokenStorage,
     tenantStorage: tenantStorage,
   );
-  final firebaseAuthGateway = FirebaseAuthGatewayImpl(FirebaseAuth.instance);
+  final firebaseAuthGateway = FirebaseAuthGatewayImpl(FirebaseAuth.instance, GoogleSignIn());
   final authRepository = AuthRepositoryImpl(firebaseAuthGateway, apiClient.dio, tenantStorage);
   final tenantRepository = TenantRepositoryImpl(apiClient.dio);
   final serviceRepository = ServiceRepositoryImpl(apiClient.dio);

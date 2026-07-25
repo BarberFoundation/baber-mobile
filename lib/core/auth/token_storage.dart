@@ -1,8 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
-class TokenStorage {
+class TokenStorage extends ChangeNotifier {
   final FlutterSecureStorage _storage;
-  const TokenStorage(this._storage);
+  TokenStorage(this._storage);
 
   static const _accessKey = 'access_token';
   static const _refreshKey = 'refresh_token';
@@ -18,5 +19,6 @@ class TokenStorage {
   Future<void> clear() async {
     await _storage.delete(key: _accessKey);
     await _storage.delete(key: _refreshKey);
+    notifyListeners();
   }
 }

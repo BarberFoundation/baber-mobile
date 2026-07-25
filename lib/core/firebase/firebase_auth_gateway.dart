@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 abstract class FirebaseAuthGateway {
   Future<void> verifyPhoneNumber({
@@ -12,11 +13,15 @@ abstract class FirebaseAuthGateway {
     required String verificationId,
     required String smsCode,
   });
+
+  Future<String?> signInWithGoogle();
 }
 
 class FirebaseAuthGatewayImpl implements FirebaseAuthGateway {
   final FirebaseAuth _auth;
-  const FirebaseAuthGatewayImpl(this._auth);
+  final GoogleSignIn _googleSignIn;
+
+  const FirebaseAuthGatewayImpl(this._auth, this._googleSignIn);
 
   @override
   Future<void> verifyPhoneNumber({
@@ -44,6 +49,20 @@ class FirebaseAuthGatewayImpl implements FirebaseAuthGateway {
   }) {
     final credential = PhoneAuthProvider.credential(verificationId: verificationId, smsCode: smsCode);
     return _signInAndGetIdToken(credential);
+  }
+
+  @override
+  Future<String?> signInWithGoogle() async {
+    final googleUser = await _googleSignIn.signIn();
+    if (googleUser == null) return null; // usuário cancelou
+
+    final googleAuth = await googleUser.authentication;
+    final credential = GoogleAuthProvider.credential(
+      accessToken: googleAuth.accessToken,
+      idToken: googleAuth.idToken,
+    );
+    final userCredential = await _auth.signInWithCredential(credential);
+    return userCredential.user?.getIdToken();
   }
 
   Future<String> _signInAndGetIdToken(PhoneAuthCredential credential) async {

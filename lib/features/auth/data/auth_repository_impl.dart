@@ -44,6 +44,17 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<Either<Failure, AuthResult?>> signInWithGoogle() async {
+    try {
+      final idToken = await _gateway.signInWithGoogle();
+      if (idToken == null) return const Right(null); // usuário cancelou
+      return _exchangeToken(idToken);
+    } on FirebaseAuthException catch (e) {
+      return Left(FirebaseAuthFailure(code: e.code, message: _mapGoogleCode(e.code)));
+    }
+  }
+
+  @override
   Future<Either<Failure, AuthUser>> updateName(String name) async {
     try {
       final response = await _dio.patch('/me', data: {'name': name});
@@ -71,6 +82,15 @@ class AuthRepositoryImpl implements AuthRepository {
       'invalid-verification-code' => 'Código de verificação inválido.',
       'session-expired' => 'Código expirado. Solicite um novo.',
       _ => 'Erro ao verificar telefone. Tente novamente.',
+    };
+  }
+
+  String _mapGoogleCode(String code) {
+    return switch (code) {
+      'network-request-failed' => 'Sem conexão. Verifique sua internet.',
+      'account-exists-with-different-credential' => 'Já existe uma conta com este e-mail.',
+      'popup-closed-by-user' || 'canceled' => 'Login cancelado.',
+      _ => 'Erro ao entrar com Google. Tente novamente.',
     };
   }
 }

@@ -7,6 +7,66 @@ import 'auth_bloc.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
+class _GoogleLogo extends StatelessWidget {
+  const _GoogleLogo();
+
+  @override
+  Widget build(BuildContext context) {
+    return const SizedBox(
+      width: 18,
+      height: 18,
+      child: CustomPaint(painter: _GoogleLogoPainter()),
+    );
+  }
+}
+
+class _GoogleLogoPainter extends CustomPainter {
+  const _GoogleLogoPainter();
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // segmentos coloridos do "G" do Google
+    const segments = [
+      (Color(0xFF4285F4), -0.1, 1.65), // azul
+      (Color(0xFF34A853), 1.55, 3.25), // verde
+      (Color(0xFFFBBC05), 3.15, 4.45), // amarelo
+      (Color(0xFFEA4335), 4.35, 5.95), // vermelho
+    ];
+
+    for (final (color, start, end) in segments) {
+      final paint = Paint()
+        ..color = color
+        ..strokeWidth = size.width * 0.28
+        ..style = PaintingStyle.stroke;
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius * 0.72),
+        start,
+        end - start,
+        false,
+        paint,
+      );
+    }
+
+    // barra horizontal do "G"
+    final barPaint = Paint()
+      ..color = const Color(0xFF4285F4)
+      ..strokeWidth = size.width * 0.28
+      ..strokeCap = StrokeCap.round
+      ..style = PaintingStyle.stroke;
+    canvas.drawLine(
+      Offset(center.dx, center.dy),
+      Offset(center.dx + radius * 0.72, center.dy),
+      barPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 class PhoneScreen extends StatefulWidget {
   const PhoneScreen({super.key});
 
@@ -104,6 +164,28 @@ class _PhoneScreenState extends State<PhoneScreen> {
                                 child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink),
                               )
                             : const Text('Continuar'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        const Expanded(child: Divider()),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 12),
+                          child: Text('ou', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.steel)),
+                        ),
+                        const Expanded(child: Divider()),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: state.isLoading
+                            ? null
+                            : () => context.read<AuthBloc>().add(const GoogleSignInSubmitted()),
+                        icon: const _GoogleLogo(),
+                        label: const Text('Entrar com Google'),
                       ),
                     ),
                   ],
