@@ -161,6 +161,52 @@ void main() {
   );
 
   blocTest<AuthBloc, AuthState>(
+    'emits [loading, needsName] when GoogleSignInSubmitted succeeds with nameless user',
+    build: () {
+      when(() => repository.signInWithGoogle())
+          .thenAnswer((_) async => const Right(authResult));
+      return AuthBloc(repository: repository, tokenStorage: tokenStorage);
+    },
+    act: (bloc) => bloc.add(const GoogleSignInSubmitted()),
+    expect: () => [
+      const AuthState(isLoading: true),
+      const AuthState(userNeedingName: userNeedsName),
+    ],
+    verify: (_) {
+      verify(() => tokenStorage.saveTokens(accessToken: 'a', refreshToken: 'r')).called(1);
+    },
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits [loading, idle] when GoogleSignInSubmitted is cancelled by the user',
+    build: () {
+      when(() => repository.signInWithGoogle())
+          .thenAnswer((_) async => const Right(null));
+      return AuthBloc(repository: repository, tokenStorage: tokenStorage);
+    },
+    act: (bloc) => bloc.add(const GoogleSignInSubmitted()),
+    expect: () => [
+      const AuthState(isLoading: true),
+      const AuthState(),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
+    'emits [loading, error] when GoogleSignInSubmitted fails',
+    build: () {
+      when(() => repository.signInWithGoogle()).thenAnswer(
+        (_) async => const Left(FirebaseAuthFailure(code: 'network-request-failed', message: 'Sem conexão. Verifique sua internet.')),
+      );
+      return AuthBloc(repository: repository, tokenStorage: tokenStorage);
+    },
+    act: (bloc) => bloc.add(const GoogleSignInSubmitted()),
+    expect: () => [
+      const AuthState(isLoading: true),
+      const AuthState(errorMessage: 'Sem conexão. Verifique sua internet.'),
+    ],
+  );
+
+  blocTest<AuthBloc, AuthState>(
     'emits [authenticated] when NameSubmitted succeeds',
     build: () {
       const namedUser = AuthUser(id: 'u1', name: 'Gabryel', phone: '+5511999999999');

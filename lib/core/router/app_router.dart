@@ -145,8 +145,18 @@ GoRouter buildAppRouter({
     appLinks: appLinks,
   );
 
+  const publicPaths = ['/', '/tenant-selection', '/phone', '/otp', '/name'];
+
   return GoRouter(
     initialLocation: '/',
+    refreshListenable: tokenStorage,
+    redirect: (context, state) async {
+      if (publicPaths.contains(state.matchedLocation)) return null;
+      final token = await tokenStorage.readAccessToken();
+      if (token != null) return null;
+      final tenantId = await tenantStorage.readTenantId();
+      return tenantId != null ? '/phone' : '/tenant-selection';
+    },
     routes: [
       GoRoute(
         path: '/',
@@ -258,7 +268,7 @@ GoRouter buildAppRouter({
                   ),
                   (user) => BlocProvider(
                     create: (_) => ActivateSubscriptionBloc(repository: loyaltyRepository, tier: tier),
-                    child: ActivateSubscriptionScreen(tier: tier, initialName: user.name ?? '', initialPhone: user.phone),
+                    child: ActivateSubscriptionScreen(tier: tier, initialName: user.name ?? '', initialPhone: user.phone ?? ''),
                   ),
                 );
               },
@@ -307,7 +317,7 @@ GoRouter buildAppRouter({
                 // realmente morta aparece quando BookingConfirmed falhar.
                 return snapshot.data!.fold(
                   (_) => const ConfirmBookingScreen(initialName: '', initialPhone: ''),
-                  (user) => ConfirmBookingScreen(initialName: user.name ?? '', initialPhone: user.phone),
+                  (user) => ConfirmBookingScreen(initialName: user.name ?? '', initialPhone: user.phone ?? ''),
                 );
               },
             ),

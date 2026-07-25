@@ -3,16 +3,16 @@ import 'package:equatable/equatable.dart';
 class AuthUser extends Equatable {
   final String id;
   final String? name;
-  final String phone;
+  final String? phone;
 
-  const AuthUser({required this.id, required this.name, required this.phone});
+  const AuthUser({required this.id, required this.name, this.phone});
 
   bool get needsName => name == null;
 
   factory AuthUser.fromJson(Map<String, dynamic> json) => AuthUser(
         id: json['id'] as String,
         name: json['name'] as String?,
-        phone: json['phone'] as String,
+        phone: json['phone'] as String?,
       );
 
   @override

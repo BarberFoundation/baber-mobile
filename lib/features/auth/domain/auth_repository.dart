@@ -15,5 +15,7 @@ abstract class AuthRepository {
     required String smsCode,
   });
 
+  Future<Either<Failure, AuthResult?>> signInWithGoogle();
+
   Future<Either<Failure, AuthUser>> updateName(String name);
 }

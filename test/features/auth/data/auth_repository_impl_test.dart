@@ -193,6 +193,49 @@ void main() {
     });
   });
 
+  group('signInWithGoogle', () {
+    test('returns Right(null) when the user cancels (gateway returns null)', () async {
+      when(() => gateway.signInWithGoogle()).thenAnswer((_) async => null);
+
+      final result = await repository.signInWithGoogle();
+
+      result.fold((_) => fail('expected right'), (r) => expect(r, isNull));
+    });
+
+    test('exchanges the idToken and returns Right(AuthResult) on success', () async {
+      when(() => gateway.signInWithGoogle()).thenAnswer((_) async => 'google-id-token');
+      when(() => dio.post('/auth/client/exchange', data: {'idToken': 'google-id-token', 'tenantId': 't1'}))
+          .thenAnswer((_) async => Response(
+                requestOptions: RequestOptions(path: '/auth/client/exchange'),
+                statusCode: 200,
+                data: {
+                  'accessToken': 'a',
+                  'refreshToken': 'r',
+                  'user': {'id': 'u1', 'name': 'Gabs', 'phone': null},
+                },
+              ));
+
+      final result = await repository.signInWithGoogle();
+
+      result.fold((_) => fail('expected right'), (r) {
+        expect(r?.accessToken, 'a');
+        expect(r?.user.phone, isNull);
+      });
+    });
+
+    test('maps FirebaseAuthException from gateway to FirebaseAuthFailure', () async {
+      // ignore: invalid_use_of_protected_member
+      when(() => gateway.signInWithGoogle()).thenThrow(FirebaseAuthException(code: 'network-request-failed'));
+
+      final result = await repository.signInWithGoogle();
+
+      result.fold((failure) {
+        expect(failure, isA<FirebaseAuthFailure>());
+        expect((failure as FirebaseAuthFailure).message, 'Sem conexão. Verifique sua internet.');
+      }, (_) => fail('expected left'));
+    });
+  });
+
   test('updateName patches /me and returns AuthUser', () async {
     when(() => dio.patch('/me', data: {'name': 'Gabryel'})).thenAnswer((_) async => Response(
           requestOptions: RequestOptions(path: '/me'),
