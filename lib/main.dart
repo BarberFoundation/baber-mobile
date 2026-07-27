@@ -37,7 +37,17 @@ void main() async {
     tokenStorage: tokenStorage,
     tenantStorage: tenantStorage,
   );
-  final firebaseAuthGateway = FirebaseAuthGatewayImpl(FirebaseAuth.instance, GoogleSignIn());
+  // iOS/macOS google_sign_in reads its client ID from GoogleService-Info.plist —
+  // this project has none (Firebase itself is configured purely through
+  // firebase_options.dart), so GIDSignIn has no client ID and signIn() crashes
+  // natively. Pass it explicitly from the same FlutterFire-generated options.
+  // Android is unaffected: it resolves its client ID from google-services.json.
+  final googleSignIn = GoogleSignIn(
+    clientId: defaultTargetPlatform == TargetPlatform.iOS
+        ? DefaultFirebaseOptions.ios.iosClientId
+        : null,
+  );
+  final firebaseAuthGateway = FirebaseAuthGatewayImpl(FirebaseAuth.instance, googleSignIn);
   final authRepository = AuthRepositoryImpl(firebaseAuthGateway, apiClient.dio, tenantStorage);
   final tenantRepository = TenantRepositoryImpl(apiClient.dio);
   final serviceRepository = ServiceRepositoryImpl(apiClient.dio);
