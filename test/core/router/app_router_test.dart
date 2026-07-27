@@ -14,6 +14,7 @@ import 'package:baber_mobile/features/booking/domain/time_slot.dart';
 import 'package:baber_mobile/features/catalog/domain/service.dart';
 import 'package:baber_mobile/features/catalog/domain/service_repository.dart';
 import 'package:baber_mobile/features/loyalty/domain/loyalty_repository.dart';
+import 'package:baber_mobile/features/loyalty/domain/subscription_tier_view.dart';
 import 'package:baber_mobile/features/notifications/domain/notifications_repository.dart';
 import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 import 'package:baber_mobile/features/tenant_selection/domain/tenant_repository.dart';
@@ -31,7 +32,7 @@ class MockProfileRepository extends Mock implements ProfileRepository {}
 class MockAppLinks extends Mock implements AppLinks {}
 
 void main() {
-  GoRouter buildRouter({BookingRepository? bookingRepository}) {
+  GoRouter buildRouter({BookingRepository? bookingRepository, LoyaltyRepository? loyaltyRepository}) {
     final serviceRepository = MockServiceRepository();
     when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right(<Service>[]));
     // Splash monta em '/' e resolve a rota inicial antes do go() do teste.
@@ -50,7 +51,7 @@ void main() {
       serviceRepository: serviceRepository,
       bookingRepository: bookingRepository ?? MockBookingRepository(),
       appointmentRepository: MockAppointmentRepository(),
-      loyaltyRepository: MockLoyaltyRepository(),
+      loyaltyRepository: loyaltyRepository ?? MockLoyaltyRepository(),
       notificationsRepository: MockNotificationsRepository(),
       profileRepository: MockProfileRepository(),
       appLinks: appLinks,
@@ -92,5 +93,21 @@ void main() {
 
     expect(find.text('09:00'), findsOneWidget);
     expect(find.text('Nenhum serviço disponível no momento.'), findsNothing);
+  });
+
+  testWidgets('pix-payment route without a PixPayment extra redirects instead of crashing', (tester) async {
+    final loyaltyRepository = MockLoyaltyRepository();
+    when(() => loyaltyRepository.getAvailableTiers()).thenAnswer((_) async => const Right(<SubscriptionTierView>[]));
+    final router = buildRouter(loyaltyRepository: loyaltyRepository);
+
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    // Simula restore de processo: go_router não serializa `extra`, então
+    // reentrar direto nessa rota (deep link, app morto em background) chega
+    // sem o PixPayment.
+    router.go('/loyalty/pix-payment');
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Planos do clube'), findsOneWidget);
   });
 }
