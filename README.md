@@ -1,4 +1,4 @@
-<img width="740" height="1600" alt="image" src="https://github.com/user-attachments/assets/2c49dc7a-2a6d-4a5a-a37f-859982fd4f81" />
+<img width="370" height="800" alt="image" src="https://github.com/user-attachments/assets/2c49dc7a-2a6d-4a5a-a37f-859982fd4f81" />
 
 # baber_mobile
 
