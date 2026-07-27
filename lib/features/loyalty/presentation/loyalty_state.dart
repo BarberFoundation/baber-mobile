@@ -13,6 +13,7 @@ class LoyaltyState extends Equatable {
   final List<SubscriptionTierView> tiers;
   final bool actionInProgress;
   final String? actionErrorMessage;
+  final bool sessionExpired;
 
   const LoyaltyState({
     this.isLoading = false,
@@ -23,6 +24,7 @@ class LoyaltyState extends Equatable {
     this.tiers = const [],
     this.actionInProgress = false,
     this.actionErrorMessage,
+    this.sessionExpired = false,
   });
 
   LoyaltyState copyWith({
@@ -57,6 +59,15 @@ class LoyaltyState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [isLoading, errorMessage, stampCard, subscription, services, tiers, actionInProgress, actionErrorMessage];
+  List<Object?> get props => [
+        isLoading,
+        errorMessage,
+        stampCard,
+        subscription,
+        services,
+        tiers,
+        actionInProgress,
+        actionErrorMessage,
+        sessionExpired,
+      ];
 }

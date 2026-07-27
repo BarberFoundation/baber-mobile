@@ -1,9 +1,9 @@
 import 'package:bloc_concurrency/bloc_concurrency.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../../core/error/failure.dart';
 import '../../../core/error/failure_message.dart';
 import '../../catalog/domain/service_repository.dart';
 import '../domain/loyalty_repository.dart';
-import '../domain/stamp_card.dart';
 import 'loyalty_event.dart';
 import 'loyalty_state.dart';
 
@@ -56,6 +56,12 @@ class LoyaltyBloc extends Bloc<LoyaltyEvent, LoyaltyState> {
     final servicesResult = await servicesFuture;
     final tiersResult = await tiersFuture;
 
+    final unauthorized = stampCardResult.fold((f) => f is UnauthorizedFailure, (_) => false);
+    if (unauthorized) {
+      emit(const LoyaltyState(sessionExpired: true));
+      return;
+    }
+
     final failureMsg = stampCardResult.fold((failure) => failureMessage(failure), (_) => null);
     if (failureMsg != null) {
       emit(LoyaltyState(errorMessage: failureMsg));
@@ -76,16 +82,17 @@ class LoyaltyBloc extends Bloc<LoyaltyEvent, LoyaltyState> {
 
     emit(state.copyWith(actionInProgress: true));
     final result = await repository.redeemCredit(card.creditBalanceInCents);
-    result.fold(
-      (failure) => emit(state.copyWith(actionErrorMessage: failureMessage(failure))),
-      (_) => emit(state.copyWith(
-        stampCard: StampCard(
-          currentStamps: card.currentStamps,
-          stampsRequired: card.stampsRequired,
-          creditBalanceInCents: 0,
-        ),
-      )),
-    );
+    final failureMsg = result.fold((failure) => failureMessage(failure), (_) => null);
+    if (failureMsg != null) {
+      emit(state.copyWith(actionErrorMessage: failureMsg));
+      return;
+    }
+
+    // POST /redeem returns 204 (no body) — refetch instead of assuming the
+    // balance zeroed out, so the UI reflects the server's authoritative
+    // post-redeem state rather than drifting from it.
+    final refreshed = await repository.getMyStampCard();
+    emit(state.copyWith(stampCard: refreshed.fold((_) => card, (c) => c)));
   }
 
   Future<void> _onCancel(Emitter<LoyaltyState> emit) async {

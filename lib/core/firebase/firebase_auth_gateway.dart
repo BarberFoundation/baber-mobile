@@ -15,6 +15,8 @@ abstract class FirebaseAuthGateway {
   });
 
   Future<String?> signInWithGoogle();
+
+  Future<void> signOut();
 }
 
 class FirebaseAuthGatewayImpl implements FirebaseAuthGateway {
@@ -63,6 +65,14 @@ class FirebaseAuthGatewayImpl implements FirebaseAuthGateway {
     );
     final userCredential = await _auth.signInWithCredential(credential);
     return userCredential.user?.getIdToken();
+  }
+
+  @override
+  Future<void> signOut() async {
+    // Firebase alone doesn't clear google_sign_in's cached account — without
+    // this, the next signInWithGoogle() on the same device silently reuses
+    // whichever Google account was cached, skipping the account picker.
+    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
   }
 
   Future<String> _signInAndGetIdToken(PhoneAuthCredential credential) async {

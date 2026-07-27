@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/status_pill.dart';
@@ -122,6 +123,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
             );
+            context.read<SessionCubit>().expireTokens();
             context.go('/phone');
             return;
           }
@@ -137,8 +139,11 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final appointments = state.appointments ?? [];
-          final upcoming = appointments.where((a) => a.isUpcoming).toList();
-          final history = appointments.where((a) => !upcoming.contains(a)).toList();
+          final upcoming = <Appointment>[];
+          final history = <Appointment>[];
+          for (final a in appointments) {
+            (a.isUpcoming ? upcoming : history).add(a);
+          }
 
           if (appointments.isEmpty) {
             return RefreshIndicator(

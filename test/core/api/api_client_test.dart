@@ -130,5 +130,37 @@ void main() {
       verify(() => tokenStorage.clear()).called(1);
       verify(() => handler.next(err)).called(1);
     });
+
+    test('refresh-request connectivity failure (no response) does not clear tokens (C13)', () async {
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/client/refresh'),
+        type: DioExceptionType.connectionError,
+      );
+      final handler = MockErrorHandler();
+
+      client.authInterceptor.onError(err, handler);
+      await untilCalled(() => handler.next(err));
+
+      verifyNever(() => tokenStorage.clear());
+      verify(() => handler.next(err)).called(1);
+    });
+  });
+
+  group('isAuthRejection', () {
+    test('true when the server responded (explicit rejection)', () {
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/client/refresh'),
+        response: Response(requestOptions: RequestOptions(path: '/auth/client/refresh'), statusCode: 401),
+      );
+      expect(isAuthRejection(err), isTrue);
+    });
+
+    test('false when there is no response (connectivity blip)', () {
+      final err = DioException(
+        requestOptions: RequestOptions(path: '/auth/client/refresh'),
+        type: DioExceptionType.receiveTimeout,
+      );
+      expect(isAuthRejection(err), isFalse);
+    });
   });
 }

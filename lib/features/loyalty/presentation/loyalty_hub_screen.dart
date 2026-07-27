@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import 'loyalty_bloc.dart';
@@ -55,8 +56,18 @@ class LoyaltyHubScreen extends StatelessWidget {
               SnackBar(content: Text(state.actionErrorMessage!)),
             );
           }
+          if (state.sessionExpired) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
+            );
+            context.read<SessionCubit>().expireTokens();
+            context.go('/phone');
+          }
         },
         builder: (context, state) {
+          if (state.sessionExpired) {
+            return const SizedBox.shrink();
+          }
           if (state.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }

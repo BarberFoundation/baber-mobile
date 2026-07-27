@@ -64,6 +64,9 @@ class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
+  @override
+  Future<void> signOut() => _gateway.signOut();
+
   Future<Either<Failure, AuthResult>> _exchangeToken(String idToken) async {
     try {
       // Tenant is always selected before this screen is reachable.

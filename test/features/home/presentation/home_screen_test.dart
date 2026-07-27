@@ -8,6 +8,7 @@ import 'package:baber_mobile/core/auth/session_cubit.dart';
 import 'package:baber_mobile/core/auth/token_storage.dart';
 import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment.dart';
+import 'package:baber_mobile/features/auth/domain/auth_repository.dart';
 import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
 import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_screen.dart';
@@ -15,11 +16,13 @@ import 'package:baber_mobile/features/home/presentation/home_state.dart';
 
 class MockTokenStorage extends Mock implements TokenStorage {}
 class MockTenantStorage extends Mock implements TenantStorage {}
+class MockAuthRepository extends Mock implements AuthRepository {}
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 void main() {
   late MockTokenStorage tokenStorage;
   late MockTenantStorage tenantStorage;
+  late MockAuthRepository authRepository;
   late MockHomeBloc bloc;
 
   setUpAll(() {
@@ -29,9 +32,11 @@ void main() {
   setUp(() {
     tokenStorage = MockTokenStorage();
     tenantStorage = MockTenantStorage();
+    authRepository = MockAuthRepository();
     bloc = MockHomeBloc();
     when(() => tokenStorage.clear()).thenAnswer((_) async {});
     when(() => tenantStorage.clear()).thenAnswer((_) async {});
+    when(() => authRepository.signOut()).thenAnswer((_) async {});
   });
 
   Future<GoRouter> pumpHome(WidgetTester tester) async {
@@ -44,7 +49,11 @@ void main() {
             providers: [
               BlocProvider<HomeBloc>.value(value: bloc),
               BlocProvider(
-                create: (_) => SessionCubit(tokenStorage: tokenStorage, tenantStorage: tenantStorage),
+                create: (_) => SessionCubit(
+                  tokenStorage: tokenStorage,
+                  tenantStorage: tenantStorage,
+                  authRepository: authRepository,
+                ),
               ),
             ],
             child: const HomeScreen(),

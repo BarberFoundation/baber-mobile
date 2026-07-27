@@ -10,6 +10,12 @@ import 'single_flight.dart';
 /// in isolation, without needing to simulate Dio's interceptor pipeline.
 bool isRefreshRequestPath(String path) => path == '/auth/client/refresh';
 
+/// A response from the server means it explicitly rejected the request
+/// (expired/revoked refresh token, etc.) — a real reason to log out. No
+/// response at all (timeout, no connectivity, DNS failure, ...) just means
+/// the server was unreachable, which says nothing about the token's validity.
+bool isAuthRejection(DioException error) => error.response != null;
+
 class ApiClient {
   final Dio dio;
   final TokenStorage tokenStorage;
@@ -40,12 +46,14 @@ class ApiClient {
         // interceptor). If the refresh token is expired/revoked, that
         // request will also fail with a 401, which would otherwise
         // re-enter this handler and call _tryRefresh() again, forever.
-        // Any failure of the refresh request itself (401 or otherwise,
-        // e.g. a network error) is treated as "refresh failed": clear
-        // tokens once and propagate the error without recursing.
+        // Only an explicit rejection from the server clears tokens here — a
+        // connectivity blip on the refresh call itself leaves the session
+        // intact so the app can retry later instead of forcing a logout.
         final isRefreshRequest = isRefreshRequestPath(error.requestOptions.path);
         if (isRefreshRequest) {
-          await tokenStorage.clear();
+          if (isAuthRejection(error)) {
+            await tokenStorage.clear();
+          }
         } else if (error.response?.statusCode == 401) {
           final refreshed = await _tryRefresh();
           if (refreshed) {
@@ -54,7 +62,9 @@ class ApiClient {
             final response = await dio.fetch(error.requestOptions);
             return handler.resolve(response);
           }
-          await tokenStorage.clear();
+          // _tryRefresh() already cleared tokens above if the refresh call
+          // was itself rejected; a transient failure there leaves them
+          // intact, so nothing to do here either way.
         }
         handler.next(error);
       },
@@ -75,7 +85,12 @@ class ApiClient {
 
   Future<bool> _doRefresh() async {
     final refreshToken = await tokenStorage.readRefreshToken();
-    if (refreshToken == null) return false;
+    if (refreshToken == null) {
+      // Nothing to refresh with — a definitive dead session, not a
+      // transient failure, so clear here same as an explicit rejection.
+      await tokenStorage.clear();
+      return false;
+    }
     try {
       // Mobile has no cookie jar, so it hits the client-specific refresh
       // endpoint that returns the rotated refresh token in the body —
@@ -90,6 +105,10 @@ class ApiClient {
       await tokenStorage.saveTokens(accessToken: accessToken, refreshToken: newRefreshToken);
       return true;
     } catch (_) {
+      // The refresh POST goes through this same interceptor, so an explicit
+      // rejection (401/403 response) was already cleared by the
+      // isRefreshRequest branch in onError above; a transient failure
+      // (no response) intentionally leaves tokens untouched here.
       return false;
     }
   }

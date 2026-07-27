@@ -103,9 +103,34 @@ void main() {
   );
 
   blocTest<LoyaltyBloc, LoyaltyState>(
-    'RedeemAllCreditRequested zeroes the credit balance on success',
+    'emits [loading, sessionExpired] when the stamp card fetch is unauthorized',
     build: () {
-      when(() => repository.getMyStampCard()).thenAnswer((_) async => const Right(stampCard));
+      when(() => repository.getMyStampCard())
+          .thenAnswer((_) async => const Left(UnauthorizedFailure()));
+      when(() => repository.getMySubscription()).thenAnswer((_) async => const Right(null));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
+      when(() => repository.getAvailableTiers()).thenAnswer((_) async => const Right([tier]));
+      return build();
+    },
+    act: (bloc) => bloc.add(LoadLoyaltyHub()),
+    expect: () => [
+      const LoyaltyState(isLoading: true),
+      const LoyaltyState(sessionExpired: true),
+    ],
+  );
+
+  blocTest<LoyaltyBloc, LoyaltyState>(
+    'RedeemAllCreditRequested refetches the stamp card from the server after a successful redeem',
+    build: () {
+      // Redeem returns 204 (no body), so the bloc must refetch rather than
+      // assume the balance zeroed out locally — stub two distinct responses
+      // to prove the post-redeem state comes from the second server call.
+      const zeroBalanceCard = StampCard(currentStamps: 3, stampsRequired: 10, creditBalanceInCents: 0);
+      var callCount = 0;
+      when(() => repository.getMyStampCard()).thenAnswer((_) async {
+        callCount++;
+        return Right(callCount == 1 ? stampCard : zeroBalanceCard);
+      });
       when(() => repository.getMySubscription()).thenAnswer((_) async => const Right(null));
       when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
       when(() => repository.getAvailableTiers()).thenAnswer((_) async => const Right([tier]));
@@ -118,6 +143,9 @@ void main() {
       isA<LoyaltyState>().having((s) => s.actionInProgress, 'actionInProgress', true),
       isA<LoyaltyState>().having((s) => s.stampCard?.creditBalanceInCents, 'creditBalanceInCents', 0),
     ],
+    verify: (_) {
+      verify(() => repository.getMyStampCard()).called(2);
+    },
   );
 
   blocTest<LoyaltyBloc, LoyaltyState>(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/relative_time.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
@@ -55,6 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
             );
+            context.read<SessionCubit>().expireTokens();
             context.go('/phone');
             return;
           }
