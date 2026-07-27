@@ -42,7 +42,7 @@ void main() {
 
   group('authInterceptor.onRequest', () {
     test('skips auth headers when the request is marked with skipAuth (S2)', () async {
-      final options = RequestOptions(path: '/auth/refresh', extra: {'skipAuth': true});
+      final options = RequestOptions(path: '/auth/client/refresh', extra: {'skipAuth': true});
       final handler = MockRequestHandler();
 
       (client.authInterceptor as InterceptorsWrapper).onRequest(options, handler);
@@ -76,14 +76,15 @@ void main() {
     // unit tested here in isolation. This directly proves the condition
     // that prevents a 401 from /auth/refresh from re-triggering
     // _tryRefresh(), which is what stops the unbounded recursion.
-    test('returns true for the refresh endpoint path', () {
-      expect(isRefreshRequestPath('/auth/refresh'), isTrue);
+    test('returns true for the client refresh endpoint path', () {
+      expect(isRefreshRequestPath('/auth/client/refresh'), isTrue);
     });
 
     test('returns false for other request paths, including 401-prone ones', () {
       expect(isRefreshRequestPath('/appointments'), isFalse);
       expect(isRefreshRequestPath('/auth/login'), isFalse);
-      expect(isRefreshRequestPath('/auth/refreshx'), isFalse);
+      expect(isRefreshRequestPath('/auth/refresh'), isFalse); // web-only cookie endpoint, not used by mobile
+      expect(isRefreshRequestPath('/auth/client/refreshx'), isFalse);
       expect(isRefreshRequestPath(''), isFalse);
     });
   });
@@ -93,9 +94,9 @@ void main() {
       when(() => tokenStorage.clear()).thenAnswer((_) async {});
 
       final err = DioException(
-        requestOptions: RequestOptions(path: '/auth/refresh'),
+        requestOptions: RequestOptions(path: '/auth/client/refresh'),
         response: Response(
-          requestOptions: RequestOptions(path: '/auth/refresh'),
+          requestOptions: RequestOptions(path: '/auth/client/refresh'),
           statusCode: 401,
         ),
       );

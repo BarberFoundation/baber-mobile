@@ -8,7 +8,7 @@ import 'single_flight.dart';
 /// Extracted as a standalone function so the recursion guard in
 /// [ApiClient]'s `authInterceptor` `onError` handler can be unit tested
 /// in isolation, without needing to simulate Dio's interceptor pipeline.
-bool isRefreshRequestPath(String path) => path == '/auth/refresh';
+bool isRefreshRequestPath(String path) => path == '/auth/client/refresh';
 
 class ApiClient {
   final Dio dio;
@@ -25,7 +25,7 @@ class ApiClient {
     authInterceptor = InterceptorsWrapper(
       onRequest: (options, handler) async {
         // O refresh marca skipAuth: mandar o access token expirado no
-        // Authorization do próprio /auth/refresh é credencial morta (S2).
+        // Authorization do próprio /auth/client/refresh é credencial morta (S2).
         if (options.extra['skipAuth'] == true) {
           handler.next(options);
           return;
@@ -35,7 +35,7 @@ class ApiClient {
         handler.next(options);
       },
       onError: (error, handler) async {
-        // Guard against infinite recursion: the /auth/refresh call itself
+        // Guard against infinite recursion: the /auth/client/refresh call itself
         // goes through this same Dio instance (and thus this same
         // interceptor). If the refresh token is expired/revoked, that
         // request will also fail with a 401, which would otherwise
@@ -77,8 +77,11 @@ class ApiClient {
     final refreshToken = await tokenStorage.readRefreshToken();
     if (refreshToken == null) return false;
     try {
+      // Mobile has no cookie jar, so it hits the client-specific refresh
+      // endpoint that returns the rotated refresh token in the body —
+      // POST /auth/refresh (web) only sets it as an httpOnly cookie.
       final response = await dio.post(
-        '/auth/refresh',
+        '/auth/client/refresh',
         data: {'refreshToken': refreshToken},
         options: Options(extra: {'skipAuth': true}),
       );
