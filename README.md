@@ -8,7 +8,7 @@ App Flutter do cliente da plataforma de barbearia (multi-tenant). Consome a API 
 - **Estado** — flutter_bloc + equatable.
 - **Navegação** — go_router (deep links via app_links).
 - **HTTP** — dio (client em `core/api`, tokens em flutter_secure_storage).
-- **Auth** — Firebase Auth (phone/OTP, projeto `baber-fundation`; iOS exige URL scheme do reCAPTCHA).
+- **Auth** — Firebase Auth (phone/OTP + Google Sign-In, projeto `baber-fundation`; iOS exige URL scheme do reCAPTCHA e `clientId` explícito pro `google_sign_in` — ver `main.dart`).
 - **Erros funcionais** — dartz (`Either`).
 - **Testes** — flutter_test + bloc_test + mocktail.
 
@@ -35,6 +35,7 @@ lib/
     catalog/              serviços da barbearia
     booking/              fluxo de agendamento (serviço → barbeiro → horário)
     appointments/         meus agendamentos (regra de "próximos" no domain)
+    loyalty/              cartão fidelidade + assinatura de clube
     notifications/        notificações
     profile/              perfil do cliente
   shared/                 theme, utils, widgets
