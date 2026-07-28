@@ -5,6 +5,7 @@ import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/theme_cubit.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
+import '../../../shared/widgets/dotted_border_box.dart';
 import '../../../shared/widgets/stripe_bar.dart';
 import 'home_bloc.dart';
 import 'home_event.dart';
@@ -92,8 +93,15 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               const SizedBox(height: 20),
-              if (state.nextAppointment != null) _NextAppointmentCard(state: state),
-              if (state.nextAppointment != null) const SizedBox(height: 28),
+              if (state.nextAppointment != null)
+                _NextAppointmentCard(state: state)
+              else
+                _EmptyAppointmentCard(onTap: () => context.push('/services')),
+              const SizedBox(height: 28),
+              if (!state.hasActiveSubscription) ...[
+                _SubscribeClubBanner(onTap: () => context.push('/loyalty')),
+                const SizedBox(height: 20),
+              ],
               Text(
                 'ATALHOS',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(letterSpacing: 1.2),
@@ -189,6 +197,97 @@ class _NextAppointmentCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _EmptyAppointmentCard extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _EmptyAppointmentCard({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: DottedBorderBox(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 18),
+            child: Column(
+              children: [
+                const Icon(Icons.event_available_outlined, color: AppColors.brass, size: 28),
+                const SizedBox(height: 10),
+                Text(
+                  'Nenhuma consulta agendada',
+                  style: Theme.of(context).textTheme.titleMedium,
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Reserve seu próximo corte em poucos toques.',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.steel),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                OutlinedButton(onPressed: onTap, child: const Text('Agendar agora')),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SubscribeClubBanner extends StatelessWidget {
+  final VoidCallback onTap;
+
+  const _SubscribeClubBanner({required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [AppColors.brassDim, AppColors.brass],
+            ),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.workspace_premium_outlined, color: AppColors.ink),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Assine o Clube',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink),
+                    ),
+                    Text(
+                      'Benefícios exclusivos todo mês.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.ink),
+            ],
+          ),
         ),
       ),
     );

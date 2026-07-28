@@ -7,6 +7,7 @@ class HomeState extends Equatable {
   final String? nextAppointmentServiceName;
   final bool isLoading;
   final bool sessionExpired;
+  final bool hasActiveSubscription;
 
   const HomeState({
     this.userName,
@@ -14,9 +15,16 @@ class HomeState extends Equatable {
     this.nextAppointmentServiceName,
     this.isLoading = false,
     this.sessionExpired = false,
+    this.hasActiveSubscription = false,
   });
 
   @override
-  List<Object?> get props =>
-      [userName, nextAppointment, nextAppointmentServiceName, isLoading, sessionExpired];
+  List<Object?> get props => [
+        userName,
+        nextAppointment,
+        nextAppointmentServiceName,
+        isLoading,
+        sessionExpired,
+        hasActiveSubscription,
+      ];
 }

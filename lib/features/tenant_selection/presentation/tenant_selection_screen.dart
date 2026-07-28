@@ -72,7 +72,16 @@ class _TenantSelectionScreenState extends State<TenantSelectionScreen> {
                             padding: const EdgeInsets.all(16),
                             child: Row(
                               children: [
-                                const Icon(Icons.storefront_outlined, color: AppColors.brass),
+                                Container(
+                                  width: 40,
+                                  height: 40,
+                                  alignment: Alignment.center,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    color: AppColors.brass.withValues(alpha: 0.15),
+                                  ),
+                                  child: const Icon(Icons.storefront_outlined, color: AppColors.brass),
+                                ),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(tenant.name, style: Theme.of(context).textTheme.titleMedium),
