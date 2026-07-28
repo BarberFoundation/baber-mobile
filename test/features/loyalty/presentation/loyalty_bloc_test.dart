@@ -66,6 +66,59 @@ void main() {
   );
 
   blocTest<LoyaltyBloc, LoyaltyState>(
+    'sets justCompletedCard when the stamp count crosses from incomplete to complete',
+    build: () {
+      when(() => repository.getMyStampCard()).thenAnswer(
+        (_) async => const Right(StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0)),
+      );
+      when(() => repository.getMySubscription()).thenAnswer((_) async => const Right(null));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
+      when(() => repository.getAvailableTiers()).thenAnswer((_) async => const Right([tier]));
+      return build();
+    },
+    seed: () => const LoyaltyState(
+      stampCard: StampCard(currentStamps: 9, stampsRequired: 10, creditBalanceInCents: 0),
+    ),
+    act: (bloc) => bloc.add(LoadLoyaltyHub()),
+    expect: () => [
+      const LoyaltyState(isLoading: true),
+      const LoyaltyState(
+        stampCard: StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0),
+        subscription: null,
+        services: [service],
+        tiers: [tier],
+        justCompletedCard: true,
+      ),
+    ],
+  );
+
+  blocTest<LoyaltyBloc, LoyaltyState>(
+    'does not set justCompletedCard when the card was already complete before reload',
+    build: () {
+      when(() => repository.getMyStampCard()).thenAnswer(
+        (_) async => const Right(StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0)),
+      );
+      when(() => repository.getMySubscription()).thenAnswer((_) async => const Right(null));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
+      when(() => repository.getAvailableTiers()).thenAnswer((_) async => const Right([tier]));
+      return build();
+    },
+    seed: () => const LoyaltyState(
+      stampCard: StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0),
+    ),
+    act: (bloc) => bloc.add(LoadLoyaltyHub()),
+    expect: () => [
+      const LoyaltyState(isLoading: true),
+      const LoyaltyState(
+        stampCard: StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0),
+        subscription: null,
+        services: [service],
+        tiers: [tier],
+      ),
+    ],
+  );
+
+  blocTest<LoyaltyBloc, LoyaltyState>(
     'emits [loading, loaded with subscription] when the client has an active subscription',
     build: () {
       when(() => repository.getMyStampCard()).thenAnswer((_) async => const Right(stampCard));

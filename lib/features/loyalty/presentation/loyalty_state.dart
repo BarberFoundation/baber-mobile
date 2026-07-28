@@ -14,6 +14,10 @@ class LoyaltyState extends Equatable {
   final bool actionInProgress;
   final String? actionErrorMessage;
   final bool sessionExpired;
+  // Transient — true only for the single emission where the stamp card just
+  // crossed from incomplete to complete, so the UI can play the celebration
+  // once and not replay it on every subsequent load.
+  final bool justCompletedCard;
 
   const LoyaltyState({
     this.isLoading = false,
@@ -25,6 +29,7 @@ class LoyaltyState extends Equatable {
     this.actionInProgress = false,
     this.actionErrorMessage,
     this.sessionExpired = false,
+    this.justCompletedCard = false,
   });
 
   LoyaltyState copyWith({
@@ -69,5 +74,6 @@ class LoyaltyState extends Equatable {
         actionInProgress,
         actionErrorMessage,
         sessionExpired,
+        justCompletedCard,
       ];
 }
