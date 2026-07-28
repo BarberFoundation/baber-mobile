@@ -30,10 +30,26 @@ void main() {
     whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123'));
 
     await tester.pumpWidget(wrap(const OtpScreen()));
-    await tester.enterText(find.byType(TextField), '123456');
+    await tester.enterText(find.byKey(const ValueKey('otp-box-0')), '123456');
+    await tester.pump();
     await tester.tap(find.text('Confirmar'));
 
     verify(() => bloc.add(const CodeSubmitted(phone: '+5511999999999', code: '123456'))).called(1);
+  });
+
+  testWidgets('Confirmar stays disabled until all 6 digits are entered', (tester) async {
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState(codeSentToPhone: '+5511999999999', verificationId: 'ver-123'));
+
+    await tester.pumpWidget(wrap(const OtpScreen()));
+
+    final button = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+    expect(button.onPressed, isNull);
+
+    await tester.enterText(find.byKey(const ValueKey('otp-box-0')), '12345');
+    await tester.pump();
+
+    final stillDisabled = tester.widget<ElevatedButton>(find.byType(ElevatedButton));
+    expect(stillDisabled.onPressed, isNull);
   });
 
   testWidgets('resend button starts disabled with 30s countdown', (tester) async {

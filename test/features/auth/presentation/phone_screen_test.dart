@@ -41,6 +41,15 @@ void main() {
         ],
       );
 
+  testWidgets('shows the redesigned two-line headline', (tester) async {
+    whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.initial());
+
+    await tester.pumpWidget(wrap(const PhoneScreen()));
+
+    expect(find.text('Seu próximo corte,'), findsOneWidget);
+    expect(find.text('em segundos'), findsOneWidget);
+  });
+
   testWidgets('tapping Continuar dispatches PhoneSubmitted', (tester) async {
     whenListen(bloc, const Stream<AuthState>.empty(), initialState: const AuthState.initial());
 

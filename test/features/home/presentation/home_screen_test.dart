@@ -71,6 +71,7 @@ void main() {
         GoRoute(path: '/services', builder: (context, state) => const Scaffold(body: Text('services'))),
         GoRoute(path: '/appointments', builder: (context, state) => const Scaffold(body: Text('appointments'))),
         GoRoute(path: '/notifications', builder: (context, state) => const Scaffold(body: Text('notifications'))),
+        GoRoute(path: '/loyalty', builder: (context, state) => const Scaffold(body: Text('loyalty'))),
       ],
     );
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
@@ -108,6 +109,48 @@ void main() {
     await pumpHome(tester);
 
     expect(find.textContaining('Corte'), findsOneWidget);
+  });
+
+  testWidgets('shows empty-state card with Agendar agora CTA when there is no next appointment', (tester) async {
+    whenListen(bloc, const Stream<HomeState>.empty(), initialState: const HomeState(userName: 'João'));
+
+    await pumpHome(tester);
+
+    expect(find.text('Agendar agora'), findsOneWidget);
+
+    await tester.tap(find.text('Agendar agora'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('services'), findsOneWidget);
+  });
+
+  testWidgets('shows Assine o Clube banner when there is no active subscription', (tester) async {
+    whenListen(
+      bloc,
+      const Stream<HomeState>.empty(),
+      initialState: const HomeState(userName: 'João', hasActiveSubscription: false),
+    );
+
+    await pumpHome(tester);
+
+    expect(find.text('Assine o Clube'), findsOneWidget);
+
+    await tester.tap(find.text('Assine o Clube'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('loyalty'), findsOneWidget);
+  });
+
+  testWidgets('hides Assine o Clube banner when the user already has a subscription', (tester) async {
+    whenListen(
+      bloc,
+      const Stream<HomeState>.empty(),
+      initialState: const HomeState(userName: 'João', hasActiveSubscription: true),
+    );
+
+    await pumpHome(tester);
+
+    expect(find.text('Assine o Clube'), findsNothing);
   });
 
   testWidgets('tapping shortcuts navigates to services/appointments/notifications', (tester) async {

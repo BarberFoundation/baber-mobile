@@ -11,16 +11,20 @@ import 'package:baber_mobile/features/catalog/domain/service_repository.dart';
 import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
 import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_state.dart';
+import 'package:baber_mobile/features/loyalty/domain/club_subscription.dart';
+import 'package:baber_mobile/features/loyalty/domain/loyalty_repository.dart';
 import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 class MockServiceRepository extends Mock implements ServiceRepository {}
+class MockLoyaltyRepository extends Mock implements LoyaltyRepository {}
 
 void main() {
   late MockProfileRepository profileRepository;
   late MockAppointmentRepository appointmentRepository;
   late MockServiceRepository serviceRepository;
+  late MockLoyaltyRepository loyaltyRepository;
 
   const service = Service(id: 's1', name: 'Corte', priceInCents: 4000, durationMinutes: 30);
   final future = Appointment(
@@ -36,12 +40,15 @@ void main() {
         profileRepository: profileRepository,
         appointmentRepository: appointmentRepository,
         serviceRepository: serviceRepository,
+        loyaltyRepository: loyaltyRepository,
       );
 
   setUp(() {
     profileRepository = MockProfileRepository();
     appointmentRepository = MockAppointmentRepository();
     serviceRepository = MockServiceRepository();
+    loyaltyRepository = MockLoyaltyRepository();
+    when(() => loyaltyRepository.getMySubscription()).thenAnswer((_) async => const Right(null));
   });
 
   blocTest<HomeBloc, HomeState>(
@@ -90,6 +97,45 @@ void main() {
     expect: () => [
       const HomeState(isLoading: true),
       const HomeState(sessionExpired: true),
+    ],
+  );
+
+  blocTest<HomeBloc, HomeState>(
+    'hasActiveSubscription is true when the user has a club subscription',
+    build: () {
+      when(() => profileRepository.getMe())
+          .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+55')));
+      when(() => appointmentRepository.listMine()).thenAnswer((_) async => const Right([]));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([]));
+      when(() => loyaltyRepository.getMySubscription()).thenAnswer((_) async => const Right(ClubSubscription(
+            status: 'ACTIVE',
+            tierId: 'tier-1',
+            currentCycleStart: '2026-07-01',
+            currentCycleEnd: '2026-07-31',
+            quotas: [],
+          )));
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(LoadHome()),
+    expect: () => [
+      const HomeState(isLoading: true),
+      const HomeState(userName: 'João', hasActiveSubscription: true),
+    ],
+  );
+
+  blocTest<HomeBloc, HomeState>(
+    'hasActiveSubscription is false when the user has no club subscription',
+    build: () {
+      when(() => profileRepository.getMe())
+          .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+55')));
+      when(() => appointmentRepository.listMine()).thenAnswer((_) async => const Right([]));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([]));
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(LoadHome()),
+    expect: () => [
+      const HomeState(isLoading: true),
+      const HomeState(userName: 'João'),
     ],
   );
 

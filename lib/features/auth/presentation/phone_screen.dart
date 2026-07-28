@@ -136,8 +136,9 @@ class _PhoneScreenState extends State<PhoneScreen> {
                   children: [
                     const SizedBox(width: 56, child: StripeBar(height: 4)),
                     const SizedBox(height: 20),
-                    Text('Entrar', style: Theme.of(context).textTheme.displayMedium),
-                    const SizedBox(height: 6),
+                    Text('Seu próximo corte,', style: Theme.of(context).textTheme.displayMedium),
+                    Text('em segundos', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: AppColors.brass)),
+                    const SizedBox(height: 10),
                     Text(
                       'Informe seu telefone para receber o código de acesso.',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
