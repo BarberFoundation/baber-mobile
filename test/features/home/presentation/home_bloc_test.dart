@@ -79,7 +79,11 @@ void main() {
   blocTest<HomeBloc, HomeState>(
     'emits sessionExpired when the profile fetch is unauthorized',
     build: () {
+      // Fired in parallel with profile (see _onLoad), so still stubbed even
+      // though their results are discarded once profile comes back unauthorized.
       when(() => profileRepository.getMe()).thenAnswer((_) async => const Left(UnauthorizedFailure()));
+      when(() => appointmentRepository.listMine()).thenAnswer((_) async => const Right([]));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([]));
       return buildBloc();
     },
     act: (bloc) => bloc.add(LoadHome()),

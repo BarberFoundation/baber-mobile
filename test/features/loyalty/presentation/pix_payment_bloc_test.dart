@@ -48,6 +48,33 @@ void main() {
     expect: () => <PixPaymentState>[],
   );
 
+  blocTest<PixPaymentBloc, PixPaymentState>(
+    'emits sessionExpired on an unauthorized status check and stops polling (C15)',
+    build: () {
+      when(() => repository.getPaymentStatus('pay_1'))
+          .thenAnswer((_) async => const Left(UnauthorizedFailure()));
+      return PixPaymentBloc(repository: repository, paymentId: 'pay_1', pollInterval: const Duration(milliseconds: 10));
+    },
+    act: (bloc) => bloc.add(const PixPaymentStatusTicked()),
+    expect: () => [const PixPaymentState(status: PixPaymentStatus.sessionExpired)],
+  );
+
+  blocTest<PixPaymentBloc, PixPaymentState>(
+    'emits timedOut after exceeding maxAttempts instead of polling forever (C15)',
+    build: () {
+      when(() => repository.getPaymentStatus('pay_1')).thenAnswer((_) async => const Right('PENDING'));
+      return PixPaymentBloc(
+        repository: repository,
+        paymentId: 'pay_1',
+        pollInterval: const Duration(milliseconds: 10),
+        maxAttempts: 1,
+      );
+    },
+    act: (bloc) => bloc..add(const PixPaymentStatusTicked())..add(const PixPaymentStatusTicked()),
+    skip: 0,
+    expect: () => [const PixPaymentState(status: PixPaymentStatus.timedOut)],
+  );
+
   test('PixPaymentStarted schedules periodic ticks until paid, then stops', () async {
     var callCount = 0;
     when(() => repository.getPaymentStatus('pay_1')).thenAnswer((_) async {

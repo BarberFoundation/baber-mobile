@@ -1,5 +1,7 @@
 import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'core/auth/session_cubit.dart';
 import 'core/auth/token_storage.dart';
 import 'core/router/app_router.dart';
 import 'core/tenancy/tenant_storage.dart';
@@ -56,10 +58,20 @@ class BaberApp extends StatelessWidget {
       profileRepository: profileRepository,
       appLinks: appLinks,
     );
-    return MaterialApp.router(
-      title: 'Baber',
-      theme: appTheme,
-      routerConfig: router,
+    // Provided at the app root — not scoped to a single route — so every
+    // screen/bloc that hits a 401 can consistently clear the Firebase/Google
+    // session alongside the tokens (see SessionCubit.expireTokens).
+    return BlocProvider(
+      create: (_) => SessionCubit(
+        tokenStorage: tokenStorage,
+        tenantStorage: tenantStorage,
+        authRepository: authRepository,
+      ),
+      child: MaterialApp.router(
+        title: 'Baber',
+        theme: appTheme,
+        routerConfig: router,
+      ),
     );
   }
 }

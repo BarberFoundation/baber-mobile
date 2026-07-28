@@ -18,4 +18,6 @@ abstract class AuthRepository {
   Future<Either<Failure, AuthResult?>> signInWithGoogle();
 
   Future<Either<Failure, AuthUser>> updateName(String name);
+
+  Future<void> signOut();
 }

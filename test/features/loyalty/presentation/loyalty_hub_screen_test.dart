@@ -4,6 +4,10 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:baber_mobile/core/auth/session_cubit.dart';
+import 'package:baber_mobile/core/auth/token_storage.dart';
+import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
+import 'package:baber_mobile/features/auth/domain/auth_repository.dart';
 import 'package:baber_mobile/features/catalog/domain/service.dart';
 import 'package:baber_mobile/features/loyalty/domain/club_subscription.dart';
 import 'package:baber_mobile/features/loyalty/domain/stamp_card.dart';
@@ -14,20 +18,47 @@ import 'package:baber_mobile/features/loyalty/presentation/loyalty_hub_screen.da
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_state.dart';
 
 class MockLoyaltyBloc extends MockBloc<LoyaltyEvent, LoyaltyState> implements LoyaltyBloc {}
+class MockTokenStorage extends Mock implements TokenStorage {}
+class MockTenantStorage extends Mock implements TenantStorage {}
+class MockAuthRepository extends Mock implements AuthRepository {}
 
 void main() {
   late MockLoyaltyBloc bloc;
+  late MockTokenStorage tokenStorage;
+  late MockTenantStorage tenantStorage;
+  late MockAuthRepository authRepository;
 
   setUp(() {
     bloc = MockLoyaltyBloc();
+    tokenStorage = MockTokenStorage();
+    tenantStorage = MockTenantStorage();
+    authRepository = MockAuthRepository();
+    when(() => tokenStorage.clear()).thenAnswer((_) async {});
+    when(() => authRepository.signOut()).thenAnswer((_) async {});
   });
 
   const stampCard = StampCard(currentStamps: 3, stampsRequired: 10, creditBalanceInCents: 1500);
 
   Widget wrap(Widget child) => MaterialApp.router(
         routerConfig: GoRouter(routes: [
-          GoRoute(path: '/', builder: (context, state) => BlocProvider<LoyaltyBloc>.value(value: bloc, child: child)),
+          GoRoute(
+            path: '/',
+            builder: (context, state) => MultiBlocProvider(
+              providers: [
+                BlocProvider<LoyaltyBloc>.value(value: bloc),
+                BlocProvider(
+                  create: (_) => SessionCubit(
+                    tokenStorage: tokenStorage,
+                    tenantStorage: tenantStorage,
+                    authRepository: authRepository,
+                  ),
+                ),
+              ],
+              child: child,
+            ),
+          ),
           GoRoute(path: '/loyalty/plans', builder: (context, state) => const Scaffold(body: Text('Planos'))),
+          GoRoute(path: '/phone', builder: (context, state) => const Scaffold(body: Text('phone'))),
         ]),
       );
 
@@ -129,5 +160,20 @@ void main() {
     await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
 
     expect(find.textContaining('Pagamento atrasado'), findsOneWidget);
+  });
+
+  testWidgets('sessionExpired clears the Firebase/Google session and navigates to /phone', (tester) async {
+    whenListen(
+      bloc,
+      Stream.fromIterable([const LoyaltyState(sessionExpired: true)]),
+      initialState: const LoyaltyState(isLoading: true),
+    );
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+    await tester.pumpAndSettle();
+
+    verify(() => authRepository.signOut()).called(1);
+    verify(() => tokenStorage.clear()).called(1);
+    expect(find.text('phone'), findsOneWidget);
   });
 }

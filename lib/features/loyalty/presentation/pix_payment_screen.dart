@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../domain/pix_payment.dart';
@@ -37,12 +38,41 @@ class _PixPaymentScreenState extends State<PixPaymentScreen> {
               const SnackBar(content: Text('Pagamento confirmado!')),
             );
           }
+          if (state.status == PixPaymentStatus.sessionExpired) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
+            );
+            context.read<SessionCubit>().expireTokens();
+            context.go('/phone');
+          }
         },
         builder: (context, state) {
+          if (state.status == PixPaymentStatus.sessionExpired) {
+            return const SizedBox.shrink();
+          }
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              if (state.status == PixPaymentStatus.paid) ...[
+              if (state.status == PixPaymentStatus.timedOut) ...[
+                const Icon(Icons.timer_off, color: AppColors.steel, size: 64),
+                const SizedBox(height: 12),
+                Text(
+                  'Ainda não identificamos o pagamento.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.titleLarge,
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Se você já pagou, o status será atualizado em instantes. Você pode conferir depois em Meu clube.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+                ),
+                const SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: () => context.go('/loyalty'),
+                  child: const Text('Voltar para o clube'),
+                ),
+              ] else if (state.status == PixPaymentStatus.paid) ...[
                 const Icon(Icons.check_circle, color: AppColors.brass, size: 64),
                 const SizedBox(height: 12),
                 Text(

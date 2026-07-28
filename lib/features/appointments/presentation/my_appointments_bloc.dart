@@ -19,8 +19,10 @@ class MyAppointmentsBloc extends Bloc<MyAppointmentsEvent, MyAppointmentsState> 
 
   Future<void> _onLoad(LoadMyAppointments event, Emitter<MyAppointmentsState> emit) async {
     emit(const MyAppointmentsState.loading());
-    final appointmentsResult = await appointmentRepository.listMine();
-    final servicesResult = await serviceRepository.listServices();
+    final appointmentsFuture = appointmentRepository.listMine();
+    final servicesFuture = serviceRepository.listServices();
+    final appointmentsResult = await appointmentsFuture;
+    final servicesResult = await servicesFuture;
 
     final failure = appointmentsResult.fold<Failure?>((f) => f, (_) => null);
     if (failure is UnauthorizedFailure) {

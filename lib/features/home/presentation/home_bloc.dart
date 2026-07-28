@@ -23,7 +23,13 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
   Future<void> _onLoad(LoadHome event, Emitter<HomeState> emit) async {
     emit(const HomeState(isLoading: true));
 
-    final profileResult = await profileRepository.getMe();
+    // The 3 calls are independent — fire them all before any await instead
+    // of waiting on profile before even starting the other two.
+    final profileFuture = profileRepository.getMe();
+    final appointmentsFuture = appointmentRepository.listMine();
+    final servicesFuture = serviceRepository.listServices();
+
+    final profileResult = await profileFuture;
     final unauthorized = profileResult.fold((f) => f is UnauthorizedFailure, (_) => false);
     if (unauthorized) {
       emit(const HomeState(sessionExpired: true));
@@ -32,8 +38,8 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     // Falha não-auth (ex.: rede): segue sem nome em vez de travar o dashboard.
     final userName = profileResult.fold((_) => null, (user) => user.name);
 
-    final appointmentsResult = await appointmentRepository.listMine();
-    final servicesResult = await serviceRepository.listServices();
+    final appointmentsResult = await appointmentsFuture;
+    final servicesResult = await servicesFuture;
 
     final appointments = appointmentsResult.fold((_) => <Appointment>[], (a) => a);
     final upcoming = appointments.where((a) => a.isUpcoming).toList()

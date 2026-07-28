@@ -1,6 +1,6 @@
 import 'package:equatable/equatable.dart';
 
-enum PixPaymentStatus { waiting, paid }
+enum PixPaymentStatus { waiting, paid, timedOut, sessionExpired }
 
 class PixPaymentState extends Equatable {
   final PixPaymentStatus status;
