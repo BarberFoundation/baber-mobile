@@ -16,6 +16,7 @@ import 'package:baber_mobile/features/loyalty/presentation/loyalty_bloc.dart';
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_event.dart';
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_hub_screen.dart';
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_state.dart';
+import 'package:baber_mobile/shared/widgets/ring_confetti_overlay.dart';
 import 'package:baber_mobile/shared/widgets/stamp_grid.dart';
 
 class MockLoyaltyBloc extends MockBloc<LoyaltyEvent, LoyaltyState> implements LoyaltyBloc {}
@@ -91,6 +92,28 @@ void main() {
     expect(find.text('Cartão completo! Resgate seu corte grátis'), findsOneWidget);
     expect(find.text('Resgatar corte grátis'), findsOneWidget);
     expect(find.textContaining('Faltam'), findsNothing);
+  });
+
+  testWidgets('shows the celebration overlay when the card just completed', (tester) async {
+    const completeCard = StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0);
+    whenListen(
+      bloc,
+      const Stream<LoyaltyState>.empty(),
+      initialState: const LoyaltyState(stampCard: completeCard, justCompletedCard: true),
+    );
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+
+    expect(find.byType(RingConfettiOverlay), findsOneWidget);
+    expect(find.byKey(const ValueKey('stamp-card-completion-pulse')), findsOneWidget);
+  });
+
+  testWidgets('does not show the celebration overlay on a normal (non-completing) load', (tester) async {
+    whenListen(bloc, const Stream<LoyaltyState>.empty(), initialState: const LoyaltyState(stampCard: stampCard));
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+
+    expect(find.byType(RingConfettiOverlay), findsNothing);
   });
 
   testWidgets('disables "Usar crédito" when the balance is zero', (tester) async {

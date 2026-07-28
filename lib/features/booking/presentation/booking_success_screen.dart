@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/celebration_badge.dart';
 import '../../../shared/widgets/stripe_bar.dart';
 
 class BookingSuccessScreen extends StatelessWidget {
@@ -14,7 +15,9 @@ class BookingSuccessScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.check_circle, color: AppColors.brass, size: 64),
+            const CelebrationBadge(
+              child: Icon(Icons.check_circle, color: AppColors.brass, size: 64),
+            ),
             const SizedBox(height: 20),
             const SizedBox(width: 64, child: StripeBar(height: 4)),
             const SizedBox(height: 20),

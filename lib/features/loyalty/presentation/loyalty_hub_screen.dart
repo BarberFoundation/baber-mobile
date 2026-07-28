@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
+import '../../../shared/widgets/ring_confetti_overlay.dart';
 import '../../../shared/widgets/stamp_grid.dart';
 import 'loyalty_bloc.dart';
 import 'loyalty_event.dart';
@@ -174,46 +175,58 @@ class LoyaltyHubScreen extends StatelessWidget {
           final total = stampCard.stampsRequired ?? 10;
           final isComplete = stampCard.currentStamps >= total;
           final missing = (total - stampCard.currentStamps).clamp(0, total);
+          final stampCardWidget = Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'CARTÃO FIDELIDADE',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${stampCard.currentStamps} / ${stampCard.stampsRequired ?? '-'}',
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                  const SizedBox(height: 16),
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      StampGrid(filled: stampCard.currentStamps, total: total),
+                      if (state.justCompletedCard) const RingConfettiOverlay(size: 220),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    isComplete ? 'Cartão completo! Resgate seu corte grátis' : 'Faltam $missing selos',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isComplete ? AppColors.brass : AppColors.steel,
+                        ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text('Saldo de crédito: ${stampCard.formattedCreditBalance}'),
+                  const SizedBox(height: 16),
+                  OutlinedButton(
+                    onPressed: stampCard.creditBalanceInCents <= 0 || state.actionInProgress
+                        ? null
+                        : () => _confirmRedeem(context, stampCard.formattedCreditBalance),
+                    child: const Text('Usar crédito'),
+                  ),
+                ],
+              ),
+            ),
+          );
           return ListView(
             padding: const EdgeInsets.all(20),
             children: [
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'CARTÃO FIDELIDADE',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${stampCard.currentStamps} / ${stampCard.stampsRequired ?? '-'}',
-                        style: Theme.of(context).textTheme.headlineSmall,
-                      ),
-                      const SizedBox(height: 16),
-                      StampGrid(filled: stampCard.currentStamps, total: total),
-                      const SizedBox(height: 12),
-                      Text(
-                        isComplete ? 'Cartão completo! Resgate seu corte grátis' : 'Faltam $missing selos',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: isComplete ? AppColors.brass : AppColors.steel,
-                            ),
-                      ),
-                      const SizedBox(height: 12),
-                      Text('Saldo de crédito: ${stampCard.formattedCreditBalance}'),
-                      const SizedBox(height: 16),
-                      OutlinedButton(
-                        onPressed: stampCard.creditBalanceInCents <= 0 || state.actionInProgress
-                            ? null
-                            : () => _confirmRedeem(context, stampCard.formattedCreditBalance),
-                        child: const Text('Usar crédito'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
+              state.justCompletedCard
+                  ? _CompletionPulse(
+                      key: const ValueKey('stamp-card-completion-pulse'),
+                      child: stampCardWidget,
+                    )
+                  : stampCardWidget,
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: () => context.push('/loyalty/plans'),
@@ -224,5 +237,38 @@ class LoyaltyHubScreen extends StatelessWidget {
         },
       ),
     );
+  }
+}
+
+/// One-shot "just completed" scale pulse (1 → 1.035 → 0.99 → 1, ~700ms) for
+/// the stamp card, layered on top of the ring/confetti overlay drawn inside it.
+class _CompletionPulse extends StatefulWidget {
+  final Widget child;
+
+  const _CompletionPulse({super.key, required this.child});
+
+  @override
+  State<_CompletionPulse> createState() => _CompletionPulseState();
+}
+
+class _CompletionPulseState extends State<_CompletionPulse> with SingleTickerProviderStateMixin {
+  late final AnimationController _controller =
+      AnimationController(vsync: this, duration: const Duration(milliseconds: 700))..forward();
+
+  late final Animation<double> _scale = TweenSequence<double>([
+    TweenSequenceItem(tween: Tween(begin: 1.0, end: 1.035), weight: 35),
+    TweenSequenceItem(tween: Tween(begin: 1.035, end: 0.99), weight: 35),
+    TweenSequenceItem(tween: Tween(begin: 0.99, end: 1.0), weight: 30),
+  ]).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut));
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(scale: _scale, child: widget.child);
   }
 }

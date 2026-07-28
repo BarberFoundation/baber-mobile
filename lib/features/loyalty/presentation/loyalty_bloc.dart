@@ -41,6 +41,7 @@ class LoyaltyBloc extends Bloc<LoyaltyEvent, LoyaltyState> {
   }
 
   Future<void> _onLoad(Emitter<LoyaltyState> emit) async {
+    final previousCard = state.stampCard;
     emit(const LoyaltyState(isLoading: true));
 
     // As 4 chamadas disparam em paralelo (futures criadas antes de qualquer
@@ -68,11 +69,19 @@ class LoyaltyBloc extends Bloc<LoyaltyEvent, LoyaltyState> {
       return;
     }
 
+    final newCard = stampCardResult.fold((_) => null, (card) => card);
+    final wasIncomplete = previousCard != null &&
+        previousCard.stampsRequired != null &&
+        previousCard.currentStamps < previousCard.stampsRequired!;
+    final isNowComplete =
+        newCard != null && newCard.stampsRequired != null && newCard.currentStamps >= newCard.stampsRequired!;
+
     emit(LoyaltyState(
-      stampCard: stampCardResult.fold((_) => null, (card) => card),
+      stampCard: newCard,
       subscription: subscriptionResult.fold((_) => null, (s) => s),
       services: servicesResult.fold((_) => const [], (s) => s),
       tiers: tiersResult.fold((_) => const [], (t) => t),
+      justCompletedCard: wasIncomplete && isNowComplete,
     ));
   }
 
