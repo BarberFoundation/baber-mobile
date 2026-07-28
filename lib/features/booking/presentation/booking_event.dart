@@ -1,10 +1,18 @@
 import 'package:equatable/equatable.dart';
+import '../domain/barber.dart';
 import '../domain/time_slot.dart';
 
 sealed class BookingEvent extends Equatable {
   const BookingEvent();
   @override
   List<Object?> get props => [];
+}
+
+class BarberSelected extends BookingEvent {
+  final Barber? barber;
+  const BarberSelected(this.barber);
+  @override
+  List<Object?> get props => [barber];
 }
 
 class DateSelected extends BookingEvent {

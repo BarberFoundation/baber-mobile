@@ -10,23 +10,49 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
 
   BookingBloc({required this.repository, required Service service})
       : super(BookingState(service: service)) {
+    on<BarberSelected>(_onBarberSelected);
     on<DateSelected>(_onDateSelected);
     on<SlotSelected>(_onSlotSelected);
     on<BookingConfirmed>(_onBookingConfirmed);
   }
 
+  void _onBarberSelected(BarberSelected event, Emitter<BookingState> emit) {
+    emit(BookingState(
+      service: state.service,
+      selectedBarber: event.barber,
+      selectedDate: state.selectedDate,
+      slots: state.slots,
+      selectedSlot: state.selectedSlot,
+    ));
+  }
+
   Future<void> _onDateSelected(DateSelected event, Emitter<BookingState> emit) async {
     // Estado fresco: trocar de data invalida slots e seleção anteriores —
     // manter slots velhos sob data nova induz agendamento errado (C5).
-    emit(BookingState(service: state.service, selectedDate: event.date, isLoading: true));
-    final result = await repository.getAvailableSlots(serviceId: state.service.id, date: event.date);
+    emit(BookingState(
+      service: state.service,
+      selectedBarber: state.selectedBarber,
+      selectedDate: event.date,
+      isLoading: true,
+    ));
+    final result = await repository.getAvailableSlots(
+      serviceId: state.service.id,
+      date: event.date,
+      barberId: state.selectedBarber?.id,
+    );
     result.fold(
       (failure) => emit(BookingState(
         service: state.service,
+        selectedBarber: state.selectedBarber,
         selectedDate: event.date,
         errorMessage: failureMessage(failure),
       )),
-      (slots) => emit(BookingState(service: state.service, selectedDate: event.date, slots: slots)),
+      (slots) => emit(BookingState(
+        service: state.service,
+        selectedBarber: state.selectedBarber,
+        selectedDate: event.date,
+        slots: slots,
+      )),
     );
   }
 
@@ -46,6 +72,7 @@ class BookingBloc extends Bloc<BookingEvent, BookingState> {
       clientPhone: event.clientPhone,
       date: date,
       startTime: slot.startTime,
+      barberId: state.selectedBarber?.id,
     );
     result.fold(
       (failure) => emit(state.copyWith(errorMessage: failureMessage(failure))),

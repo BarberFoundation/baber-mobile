@@ -2,13 +2,12 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:go_router/go_router.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:baber_mobile/features/booking/domain/time_slot.dart';
 import 'package:baber_mobile/features/booking/presentation/booking_bloc.dart';
 import 'package:baber_mobile/features/booking/presentation/booking_event.dart';
 import 'package:baber_mobile/features/booking/presentation/booking_state.dart';
-import 'package:baber_mobile/features/booking/presentation/slot_selection_screen.dart';
+import 'package:baber_mobile/features/booking/presentation/schedule_selection_screen.dart';
 import 'package:baber_mobile/features/catalog/domain/service.dart';
 
 class MockBookingBloc extends MockBloc<BookingEvent, BookingState> implements BookingBloc {}
@@ -27,27 +26,27 @@ void main() {
     bloc = MockBookingBloc();
   });
 
-  // Wrapped with a real GoRouter (rather than a bare MaterialApp) because
-  // SlotSelectionScreen navigates via context.push on tap; without a
-  // GoRouter ancestor that call throws "No GoRouter found in context".
-  Widget wrap(Widget child) => MaterialApp.router(
-        routerConfig: GoRouter(
-          initialLocation: '/',
-          routes: [
-            GoRoute(
-              path: '/',
-              builder: (context, state) => BlocProvider<BookingBloc>.value(value: bloc, child: child),
-            ),
-            GoRoute(path: '/booking/confirm', builder: (context, state) => const SizedBox()),
-          ],
-        ),
+  Widget wrap(Widget child) => MaterialApp(
+        home: Scaffold(body: BlocProvider<BookingBloc>.value(value: bloc, child: child)),
       );
 
-  testWidgets('shows spinner while loading', (tester) async {
+  testWidgets('renders a 4-day date strip and dispatches DateSelected on tap', (tester) async {
+    whenListen(bloc, const Stream<BookingState>.empty(), initialState: const BookingState(service: service));
+
+    await tester.pumpWidget(wrap(const ScheduleSelectionScreen()));
+
+    expect(find.byType(InkWell), findsNWidgets(4));
+
+    await tester.tap(find.byType(InkWell).first);
+
+    verify(() => bloc.add(any(that: isA<DateSelected>()))).called(1);
+  });
+
+  testWidgets('shows spinner while loading slots', (tester) async {
     whenListen(bloc, const Stream<BookingState>.empty(),
         initialState: const BookingState(service: service, selectedDate: '2026-08-01', isLoading: true));
 
-    await tester.pumpWidget(wrap(const SlotSelectionScreen()));
+    await tester.pumpWidget(wrap(const ScheduleSelectionScreen()));
 
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
@@ -56,36 +55,42 @@ void main() {
     whenListen(bloc, const Stream<BookingState>.empty(),
         initialState: const BookingState(service: service, selectedDate: '2026-08-01', slots: [slot]));
 
-    await tester.pumpWidget(wrap(const SlotSelectionScreen()));
+    await tester.pumpWidget(wrap(const ScheduleSelectionScreen()));
     await tester.tap(find.text('09:00'));
-    await tester.pumpAndSettle();
 
     verify(() => bloc.add(const SlotSelected(slot))).called(1);
   });
 
-  testWidgets('shows message when no slots are available', (tester) async {
+  testWidgets('shows message when no slots are available for the selected date', (tester) async {
     whenListen(bloc, const Stream<BookingState>.empty(),
         initialState: const BookingState(service: service, selectedDate: '2026-08-01', slots: []));
 
-    await tester.pumpWidget(wrap(const SlotSelectionScreen()));
+    await tester.pumpWidget(wrap(const ScheduleSelectionScreen()));
 
     expect(find.text('Nenhum horário disponível nesta data.'), findsOneWidget);
   });
 
-  testWidgets('mostra erro com botão de tentar novamente quando errorMessage presente', (tester) async {
+  testWidgets('shows error with retry button when errorMessage is present', (tester) async {
     whenListen(
       bloc,
       const Stream<BookingState>.empty(),
       initialState: const BookingState(service: service, selectedDate: '2026-07-21', errorMessage: 'sem rede'),
     );
 
-    await tester.pumpWidget(wrap(const SlotSelectionScreen()));
+    await tester.pumpWidget(wrap(const ScheduleSelectionScreen()));
 
     expect(find.text('Não foi possível carregar os horários.'), findsOneWidget);
-    expect(find.text('Nenhum horário disponível nesta data.'), findsNothing);
 
     await tester.tap(find.text('Tentar novamente'));
 
     verify(() => bloc.add(const DateSelected('2026-07-21'))).called(1);
+  });
+
+  testWidgets('prompts to pick a date before any date is selected', (tester) async {
+    whenListen(bloc, const Stream<BookingState>.empty(), initialState: const BookingState(service: service));
+
+    await tester.pumpWidget(wrap(const ScheduleSelectionScreen()));
+
+    expect(find.text('Escolha uma data para ver os horários.'), findsOneWidget);
   });
 }

@@ -61,7 +61,7 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
               return Card(
                 child: InkWell(
                   borderRadius: BorderRadius.circular(14),
-                  onTap: () => context.push('/booking/date', extra: service),
+                  onTap: () => context.push('/booking/flow', extra: service),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
                     child: Row(

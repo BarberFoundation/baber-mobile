@@ -1,9 +1,11 @@
 import 'package:equatable/equatable.dart';
 import '../../catalog/domain/service.dart';
+import '../domain/barber.dart';
 import '../domain/time_slot.dart';
 
 class BookingState extends Equatable {
   final Service service;
+  final Barber? selectedBarber;
   final String? selectedDate;
   final List<TimeSlot>? slots;
   final TimeSlot? selectedSlot;
@@ -13,6 +15,7 @@ class BookingState extends Equatable {
 
   const BookingState({
     required this.service,
+    this.selectedBarber,
     this.selectedDate,
     this.slots,
     this.selectedSlot,
@@ -31,6 +34,7 @@ class BookingState extends Equatable {
   }) {
     return BookingState(
       service: service,
+      selectedBarber: selectedBarber,
       selectedDate: selectedDate ?? this.selectedDate,
       slots: slots ?? this.slots,
       selectedSlot: selectedSlot ?? this.selectedSlot,
@@ -41,6 +45,14 @@ class BookingState extends Equatable {
   }
 
   @override
-  List<Object?> get props =>
-      [service, selectedDate, slots, selectedSlot, isLoading, bookingSucceeded, errorMessage];
+  List<Object?> get props => [
+        service,
+        selectedBarber,
+        selectedDate,
+        slots,
+        selectedSlot,
+        isLoading,
+        bookingSucceeded,
+        errorMessage,
+      ];
 }

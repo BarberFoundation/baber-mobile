@@ -35,6 +35,48 @@ void main() {
     });
   });
 
+  test('getAvailableSlots includes barberId in query when given', () async {
+    when(() => dio.get('/appointments/available-slots', queryParameters: {
+          'serviceId': 's1',
+          'date': '2026-08-01',
+          'barberId': 'b1',
+        })).thenAnswer((_) async => Response(
+          requestOptions: RequestOptions(path: '/appointments/available-slots'),
+          statusCode: 200,
+          data: const [],
+        ));
+
+    final result = await repository.getAvailableSlots(serviceId: 's1', date: '2026-08-01', barberId: 'b1');
+
+    expect(result.isRight(), isTrue);
+  });
+
+  test('bookAppointment includes barberId in the body when given', () async {
+    when(() => dio.post('/appointments', data: {
+          'serviceId': 's1',
+          'clientName': 'João',
+          'clientPhone': '+5511999999999',
+          'date': '2026-08-01',
+          'startTime': '09:00',
+          'barberId': 'b1',
+        })).thenAnswer((_) async => Response(
+          requestOptions: RequestOptions(path: '/appointments'),
+          statusCode: 201,
+          data: {'id': 'appt-1'},
+        ));
+
+    final result = await repository.bookAppointment(
+      serviceId: 's1',
+      clientName: 'João',
+      clientPhone: '+5511999999999',
+      date: '2026-08-01',
+      startTime: '09:00',
+      barberId: 'b1',
+    );
+
+    expect(result.isRight(), isTrue);
+  });
+
   test('bookAppointment posts without barberId and returns Right on 201', () async {
     when(() => dio.post('/appointments', data: {
           'serviceId': 's1',
