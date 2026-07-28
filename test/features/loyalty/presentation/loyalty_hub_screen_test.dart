@@ -16,6 +16,7 @@ import 'package:baber_mobile/features/loyalty/presentation/loyalty_bloc.dart';
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_event.dart';
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_hub_screen.dart';
 import 'package:baber_mobile/features/loyalty/presentation/loyalty_state.dart';
+import 'package:baber_mobile/shared/widgets/stamp_grid.dart';
 
 class MockLoyaltyBloc extends MockBloc<LoyaltyEvent, LoyaltyState> implements LoyaltyBloc {}
 class MockTokenStorage extends Mock implements TokenStorage {}
@@ -70,6 +71,26 @@ void main() {
     expect(find.text('3 / 10'), findsOneWidget);
     expect(find.textContaining('R\$ 15,00'), findsOneWidget);
     expect(find.text('Ver planos'), findsOneWidget);
+  });
+
+  testWidgets('shows the 10-dot stamp grid and a "faltam N selos" message when incomplete', (tester) async {
+    whenListen(bloc, const Stream<LoyaltyState>.empty(), initialState: const LoyaltyState(stampCard: stampCard));
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+
+    expect(find.byType(StampGrid), findsOneWidget);
+    expect(find.text('Faltam 7 selos'), findsOneWidget);
+  });
+
+  testWidgets('shows completion copy and "Resgatar corte grátis" when the card is complete', (tester) async {
+    const completeCard = StampCard(currentStamps: 10, stampsRequired: 10, creditBalanceInCents: 0);
+    whenListen(bloc, const Stream<LoyaltyState>.empty(), initialState: const LoyaltyState(stampCard: completeCard));
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+
+    expect(find.text('Cartão completo! Resgate seu corte grátis'), findsOneWidget);
+    expect(find.text('Resgatar corte grátis'), findsOneWidget);
+    expect(find.textContaining('Faltam'), findsNothing);
   });
 
   testWidgets('disables "Usar crédito" when the balance is zero', (tester) async {
@@ -128,7 +149,7 @@ void main() {
     expect(find.textContaining('Corte: 1/2 usado no ciclo'), findsOneWidget);
   });
 
-  testWidgets('tapping "Cancelar assinatura" and confirming dispatches CancelSubscriptionRequested', (tester) async {
+  testWidgets('tapping "Cancelar assinatura" opens a bottom sheet listing the benefits lost', (tester) async {
     const subscription = ClubSubscription(
       status: 'ACTIVE',
       tierId: 'tier-1',
@@ -141,10 +162,50 @@ void main() {
     await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
     await tester.tap(find.text('Cancelar assinatura'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Confirmar'));
+
+    expect(find.text('Manter assinatura'), findsOneWidget);
+    expect(find.text('Cancelar mesmo assim'), findsOneWidget);
+    expect(find.text('Cortes inclusos no plano'), findsOneWidget);
+    expect(find.text('Desconto em serviços'), findsOneWidget);
+    expect(find.text('Prioridade no agendamento'), findsOneWidget);
+  });
+
+  testWidgets('tapping "Cancelar mesmo assim" in the sheet dispatches CancelSubscriptionRequested', (tester) async {
+    const subscription = ClubSubscription(
+      status: 'ACTIVE',
+      tierId: 'tier-1',
+      currentCycleStart: '2026-07-01',
+      currentCycleEnd: '2026-07-31',
+      quotas: [],
+    );
+    whenListen(bloc, const Stream<LoyaltyState>.empty(), initialState: const LoyaltyState(subscription: subscription));
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+    await tester.tap(find.text('Cancelar assinatura'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cancelar mesmo assim'));
     await tester.pumpAndSettle();
 
     verify(() => bloc.add(CancelSubscriptionRequested())).called(1);
+  });
+
+  testWidgets('tapping "Manter assinatura" in the sheet does not dispatch CancelSubscriptionRequested', (tester) async {
+    const subscription = ClubSubscription(
+      status: 'ACTIVE',
+      tierId: 'tier-1',
+      currentCycleStart: '2026-07-01',
+      currentCycleEnd: '2026-07-31',
+      quotas: [],
+    );
+    whenListen(bloc, const Stream<LoyaltyState>.empty(), initialState: const LoyaltyState(subscription: subscription));
+
+    await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
+    await tester.tap(find.text('Cancelar assinatura'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Manter assinatura'));
+    await tester.pumpAndSettle();
+
+    verifyNever(() => bloc.add(CancelSubscriptionRequested()));
   });
 
   testWidgets('shows a past-due banner when the subscription is PAST_DUE', (tester) async {
