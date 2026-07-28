@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:go_router/go_router.dart';
 import '../../../shared/theme/app_colors.dart';
-import '../../../shared/widgets/barber_app_bar.dart';
 import 'booking_bloc.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
@@ -10,8 +8,14 @@ import 'booking_state.dart';
 class ConfirmBookingScreen extends StatefulWidget {
   final String initialName;
   final String initialPhone;
+  final VoidCallback onBookingSucceeded;
 
-  const ConfirmBookingScreen({super.key, required this.initialName, required this.initialPhone});
+  const ConfirmBookingScreen({
+    super.key,
+    required this.initialName,
+    required this.initialPhone,
+    required this.onBookingSucceeded,
+  });
 
   @override
   State<ConfirmBookingScreen> createState() => _ConfirmBookingScreenState();
@@ -74,81 +78,79 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: const BarberAppBar(title: 'Confirmar agendamento'),
-      body: BlocConsumer<BookingBloc, BookingState>(
-        listener: (context, state) {
-          if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
-          }
-          if (state.bookingSucceeded) {
-            context.go('/booking/success');
-          }
-        },
-        builder: (context, state) {
-          final slot = state.selectedSlot;
-          return Form(
-            key: _formKey,
-            autovalidateMode: AutovalidateMode.onUserInteraction,
-            child: ListView(
-              padding: const EdgeInsets.all(20),
-              children: [
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'RESUMO',
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
-                        ),
-                        const Divider(height: 20),
-                        _summaryRow(context, 'Serviço', state.service.name),
-                        _summaryRow(context, 'Data', state.selectedDate ?? ''),
-                        _summaryRow(context, 'Horário', slot?.startTime ?? ''),
-                        _summaryRow(context, 'Preço', state.service.formattedPrice),
-                      ],
-                    ),
+    return BlocConsumer<BookingBloc, BookingState>(
+      listener: (context, state) {
+        if (state.errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.errorMessage!)),
+          );
+        }
+        if (state.bookingSucceeded) {
+          widget.onBookingSucceeded();
+        }
+      },
+      builder: (context, state) {
+        final slot = state.selectedSlot;
+        return Form(
+          key: _formKey,
+          autovalidateMode: AutovalidateMode.onUserInteraction,
+          child: ListView(
+            padding: const EdgeInsets.all(20),
+            children: [
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'RESUMO',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
+                      ),
+                      const Divider(height: 20),
+                      _summaryRow(context, 'Serviço', state.service.name),
+                      _summaryRow(context, 'Barbeiro', state.selectedBarber?.name ?? 'Qualquer barbeiro disponível'),
+                      _summaryRow(context, 'Data', state.selectedDate ?? ''),
+                      _summaryRow(context, 'Horário', slot?.startTime ?? ''),
+                      _summaryRow(context, 'Preço', state.service.formattedPrice),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                TextFormField(
-                  controller: _nameController,
-                  textCapitalization: TextCapitalization.words,
-                  textInputAction: TextInputAction.next,
-                  validator: _validateName,
-                  onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_phoneFocusNode),
-                  decoration: const InputDecoration(labelText: 'Nome'),
-                ),
-                const SizedBox(height: 12),
-                TextFormField(
-                  controller: _phoneController,
-                  focusNode: _phoneFocusNode,
-                  keyboardType: TextInputType.phone,
-                  textInputAction: TextInputAction.done,
-                  validator: _validatePhone,
-                  onFieldSubmitted: (_) => _submit(state),
-                  decoration: const InputDecoration(labelText: 'Telefone'),
-                ),
-                const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: state.isLoading ? null : () => _submit(state),
-                  child: state.isLoading
-                      ? const SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink),
-                        )
-                      : const Text('Confirmar'),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+              ),
+              const SizedBox(height: 20),
+              TextFormField(
+                controller: _nameController,
+                textCapitalization: TextCapitalization.words,
+                textInputAction: TextInputAction.next,
+                validator: _validateName,
+                onFieldSubmitted: (_) => FocusScope.of(context).requestFocus(_phoneFocusNode),
+                decoration: const InputDecoration(labelText: 'Nome'),
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _phoneController,
+                focusNode: _phoneFocusNode,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.done,
+                validator: _validatePhone,
+                onFieldSubmitted: (_) => _submit(state),
+                decoration: const InputDecoration(labelText: 'Telefone'),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: state.isLoading ? null : () => _submit(state),
+                child: state.isLoading
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: AppColors.ink),
+                      )
+                    : const Text('Confirmar'),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

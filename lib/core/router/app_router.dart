@@ -15,12 +15,10 @@ import '../../features/auth/presentation/phone_screen.dart';
 import '../../features/appointments/domain/appointment_repository.dart';
 import '../../features/appointments/presentation/my_appointments_bloc.dart';
 import '../../features/appointments/presentation/my_appointments_screen.dart';
+import '../../features/booking/domain/barber_repository.dart';
 import '../../features/booking/domain/booking_repository.dart';
 import '../../features/booking/presentation/booking_bloc.dart';
-import '../../features/booking/presentation/booking_success_screen.dart';
-import '../../features/booking/presentation/confirm_booking_screen.dart';
-import '../../features/booking/presentation/date_selection_screen.dart';
-import '../../features/booking/presentation/slot_selection_screen.dart';
+import '../../features/booking/presentation/booking_flow_screen.dart';
 import '../../features/catalog/domain/service.dart';
 import '../../features/catalog/domain/service_repository.dart';
 import '../../features/catalog/presentation/services_bloc.dart';
@@ -166,6 +164,7 @@ GoRouter buildAppRouter({
   required TenantRepository tenantRepository,
   required ServiceRepository serviceRepository,
   required BookingRepository bookingRepository,
+  required BarberRepository barberRepository,
   required AppointmentRepository appointmentRepository,
   required LoyaltyRepository loyaltyRepository,
   required NotificationsRepository notificationsRepository,
@@ -318,44 +317,24 @@ GoRouter buildAppRouter({
           );
         },
       ),
-      ShellRoute(
-        builder: (context, state, child) {
-          // Só o push de entrada (/booking/date) carrega o Service; pushes
-          // internos (slots/confirm/success) re-rodam este builder com extra
-          // null, então o shell captura o service do PRIMEIRO build e o
-          // mantém pelo fluxo. Sem service no primeiro build = restore de
-          // processo (go_router não serializa objetos) → volta pro catálogo
-          // em vez de TypeError (C8).
+      GoRoute(
+        path: '/booking/flow',
+        builder: (context, state) {
+          // Só o push de entrada carrega o Service; um rebuild subsequente
+          // deste mesmo route (ex.: hot-reload) roda com extra null, então o
+          // shell captura o service do PRIMEIRO build e o mantém pelo fluxo.
+          // Sem service no primeiro build = restore de processo (go_router
+          // não serializa objetos) → volta pro catálogo em vez de TypeError (C8).
           final extra = state.extra;
           return _BookingShell(
             initialService: extra is Service ? extra : null,
             repository: bookingRepository,
-            child: child,
+            child: BookingFlowScreen(
+              barberRepository: barberRepository,
+              profileRepository: profileRepository,
+            ),
           );
         },
-        routes: [
-          GoRoute(path: '/booking/date', builder: (context, state) => const DateSelectionScreen()),
-          GoRoute(path: '/booking/slots', builder: (context, state) => const SlotSelectionScreen()),
-          GoRoute(
-            path: '/booking/confirm',
-            builder: (context, state) => FutureBuilder<Either<Failure, AuthUser>>(
-              future: profileRepository.getMe(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Scaffold(body: Center(child: CircularProgressIndicator()));
-                }
-                // Best-effort prefill: qualquer falha (sessão, rede) cai em campos
-                // vazios — o usuário ainda digita nome/telefone na mão, e sessão
-                // realmente morta aparece quando BookingConfirmed falhar.
-                return snapshot.data!.fold(
-                  (_) => const ConfirmBookingScreen(initialName: '', initialPhone: ''),
-                  (user) => ConfirmBookingScreen(initialName: user.name ?? '', initialPhone: user.phone ?? ''),
-                );
-              },
-            ),
-          ),
-          GoRoute(path: '/booking/success', builder: (context, state) => const BookingSuccessScreen()),
-        ],
       ),
     ],
   );

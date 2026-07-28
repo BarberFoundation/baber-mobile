@@ -13,11 +13,16 @@ class BookingRepositoryImpl implements BookingRepository {
   Future<Either<Failure, List<TimeSlot>>> getAvailableSlots({
     required String serviceId,
     required String date,
+    String? barberId,
   }) async {
     try {
       final response = await _dio.get(
         '/appointments/available-slots',
-        queryParameters: {'serviceId': serviceId, 'date': date},
+        queryParameters: {
+          'serviceId': serviceId,
+          'date': date,
+          'barberId': ?barberId,
+        },
       );
       final slots = (response.data as List)
           .map((json) => TimeSlot.fromJson(json as Map<String, dynamic>))
@@ -35,6 +40,7 @@ class BookingRepositoryImpl implements BookingRepository {
     required String clientPhone,
     required String date,
     required String startTime,
+    String? barberId,
   }) async {
     try {
       await _dio.post('/appointments', data: {
@@ -43,6 +49,7 @@ class BookingRepositoryImpl implements BookingRepository {
         'clientPhone': clientPhone,
         'date': date,
         'startTime': startTime,
+        'barberId': ?barberId,
       });
       return const Right(null);
     } on DioException catch (e) {

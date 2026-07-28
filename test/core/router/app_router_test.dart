@@ -9,6 +9,9 @@ import 'package:baber_mobile/core/router/app_router.dart';
 import 'package:baber_mobile/core/tenancy/tenant_storage.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment_repository.dart';
 import 'package:baber_mobile/features/auth/domain/auth_repository.dart';
+import 'package:baber_mobile/features/auth/domain/auth_user.dart';
+import 'package:baber_mobile/features/booking/domain/barber.dart';
+import 'package:baber_mobile/features/booking/domain/barber_repository.dart';
 import 'package:baber_mobile/features/booking/domain/booking_repository.dart';
 import 'package:baber_mobile/features/booking/domain/time_slot.dart';
 import 'package:baber_mobile/features/catalog/domain/service.dart';
@@ -25,6 +28,7 @@ class MockAuthRepository extends Mock implements AuthRepository {}
 class MockTenantRepository extends Mock implements TenantRepository {}
 class MockServiceRepository extends Mock implements ServiceRepository {}
 class MockBookingRepository extends Mock implements BookingRepository {}
+class MockBarberRepository extends Mock implements BarberRepository {}
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 class MockLoyaltyRepository extends Mock implements LoyaltyRepository {}
 class MockNotificationsRepository extends Mock implements NotificationsRepository {}
@@ -42,6 +46,11 @@ void main() {
     when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => 'fake-token');
     when(() => tenantStorage.readTenantId()).thenAnswer((_) async => 'tenant-1');
     when(() => appLinks.getInitialLink()).thenAnswer((_) async => null);
+    final barberRepository = MockBarberRepository();
+    when(() => barberRepository.listBarbers()).thenAnswer((_) async => const Right(<Barber>[]));
+    final profileRepository = MockProfileRepository();
+    when(() => profileRepository.getMe())
+        .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+5511999999999')));
 
     return buildAppRouter(
       tokenStorage: tokenStorage,
@@ -50,10 +59,11 @@ void main() {
       tenantRepository: MockTenantRepository(),
       serviceRepository: serviceRepository,
       bookingRepository: bookingRepository ?? MockBookingRepository(),
+      barberRepository: barberRepository,
       appointmentRepository: MockAppointmentRepository(),
       loyaltyRepository: loyaltyRepository ?? MockLoyaltyRepository(),
       notificationsRepository: MockNotificationsRepository(),
-      profileRepository: MockProfileRepository(),
+      profileRepository: profileRepository,
       appLinks: appLinks,
     );
   }
@@ -64,34 +74,36 @@ void main() {
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     // Simula restore de processo: rota de booking sem o extra (go_router não
     // serializa objetos).
-    router.go('/booking/date');
+    router.go('/booking/flow');
     await tester.pumpAndSettle();
 
     expect(find.text('Nenhum serviço disponível no momento.'), findsOneWidget);
   });
 
-  testWidgets('inner booking navigation keeps the flow alive (slots push has no extra)', (tester) async {
+  testWidgets('booking flow stays alive across internal steps (no extra needed after entry)', (tester) async {
     final bookingRepository = MockBookingRepository();
     when(() => bookingRepository.getAvailableSlots(
           serviceId: any(named: 'serviceId'),
           date: any(named: 'date'),
+          barberId: any(named: 'barberId'),
         )).thenAnswer((_) async => const Right([TimeSlot(startTime: '09:00', endTime: '09:30')]));
     final router = buildRouter(bookingRepository: bookingRepository);
 
     await tester.pumpWidget(MaterialApp.router(routerConfig: router));
     router.go(
-      '/booking/date',
+      '/booking/flow',
       extra: const Service(id: 's1', name: 'Corte', priceInCents: 4000, durationMinutes: 30),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Escolha a data'), findsOneWidget);
+    expect(find.text('Escolha o barbeiro'), findsOneWidget);
 
-    // Toca um dia: dispara DateSelected e push('/booking/slots') SEM extra —
-    // o shell não pode redirecionar pro catálogo no meio do fluxo.
-    await tester.tap(find.byType(InkWell).first);
+    // Advances internal steps entirely inside the flow widget — no go_router
+    // push happens, so there's no `extra`-loss risk (unlike the old
+    // multi-route shell this replaced).
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Continuar'));
     await tester.pumpAndSettle();
 
-    expect(find.text('09:00'), findsOneWidget);
+    expect(find.text('Data e horário'), findsOneWidget);
     expect(find.text('Nenhum serviço disponível no momento.'), findsNothing);
   });
 

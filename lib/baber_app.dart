@@ -7,6 +7,7 @@ import 'core/router/app_router.dart';
 import 'core/tenancy/tenant_storage.dart';
 import 'features/appointments/domain/appointment_repository.dart';
 import 'features/auth/domain/auth_repository.dart';
+import 'features/booking/domain/barber_repository.dart';
 import 'features/booking/domain/booking_repository.dart';
 import 'features/catalog/domain/service_repository.dart';
 import 'features/loyalty/domain/loyalty_repository.dart';
@@ -25,6 +26,7 @@ class BaberApp extends StatelessWidget {
   final TenantRepository tenantRepository;
   final ServiceRepository serviceRepository;
   final BookingRepository bookingRepository;
+  final BarberRepository barberRepository;
   final LoyaltyRepository loyaltyRepository;
   final AppointmentRepository appointmentRepository;
   final NotificationsRepository notificationsRepository;
@@ -40,6 +42,7 @@ class BaberApp extends StatelessWidget {
     required this.tenantRepository,
     required this.serviceRepository,
     required this.bookingRepository,
+    required this.barberRepository,
     required this.loyaltyRepository,
     required this.appointmentRepository,
     required this.notificationsRepository,
@@ -56,6 +59,7 @@ class BaberApp extends StatelessWidget {
       tenantRepository: tenantRepository,
       serviceRepository: serviceRepository,
       bookingRepository: bookingRepository,
+      barberRepository: barberRepository,
       loyaltyRepository: loyaltyRepository,
       appointmentRepository: appointmentRepository,
       notificationsRepository: notificationsRepository,

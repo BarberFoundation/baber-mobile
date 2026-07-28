@@ -3,6 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
 import 'package:baber_mobile/core/error/failure.dart';
+import 'package:baber_mobile/features/booking/domain/barber.dart';
 import 'package:baber_mobile/features/booking/domain/booking_repository.dart';
 import 'package:baber_mobile/features/booking/domain/time_slot.dart';
 import 'package:baber_mobile/features/booking/presentation/booking_bloc.dart';
@@ -54,6 +55,88 @@ void main() {
     expect: () => [
       const BookingState(service: service, selectedDate: '2026-07-21', isLoading: true),
       const BookingState(service: service, selectedDate: '2026-07-21', errorMessage: 'sem rede'),
+    ],
+  );
+
+  blocTest<BookingBloc, BookingState>(
+    'BarberSelected updates selectedBarber',
+    build: () => BookingBloc(repository: repository, service: service),
+    act: (bloc) => bloc.add(const BarberSelected(Barber(id: 'b1', name: 'João'))),
+    expect: () => [
+      const BookingState(service: service, selectedBarber: Barber(id: 'b1', name: 'João')),
+    ],
+  );
+
+  blocTest<BookingBloc, BookingState>(
+    'BarberSelected with null means "qualquer barbeiro disponível"',
+    build: () => BookingBloc(repository: repository, service: service),
+    seed: () => const BookingState(service: service, selectedBarber: Barber(id: 'b1', name: 'João')),
+    act: (bloc) => bloc.add(const BarberSelected(null)),
+    expect: () => [
+      const BookingState(service: service, selectedBarber: null),
+    ],
+  );
+
+  blocTest<BookingBloc, BookingState>(
+    'DateSelected passes the selected barberId to getAvailableSlots',
+    build: () {
+      when(() => repository.getAvailableSlots(serviceId: 's1', date: '2026-08-01', barberId: 'b1'))
+          .thenAnswer((_) async => const Right([TimeSlot(startTime: '09:00', endTime: '09:30')]));
+      return BookingBloc(repository: repository, service: service);
+    },
+    seed: () => const BookingState(service: service, selectedBarber: Barber(id: 'b1', name: 'João')),
+    act: (bloc) => bloc.add(const DateSelected('2026-08-01')),
+    expect: () => [
+      const BookingState(
+        service: service,
+        selectedBarber: Barber(id: 'b1', name: 'João'),
+        selectedDate: '2026-08-01',
+        isLoading: true,
+      ),
+      const BookingState(
+        service: service,
+        selectedBarber: Barber(id: 'b1', name: 'João'),
+        selectedDate: '2026-08-01',
+        slots: [TimeSlot(startTime: '09:00', endTime: '09:30')],
+      ),
+    ],
+  );
+
+  blocTest<BookingBloc, BookingState>(
+    'BookingConfirmed passes the selected barberId to bookAppointment',
+    build: () {
+      when(() => repository.bookAppointment(
+            serviceId: 's1',
+            clientName: 'João',
+            clientPhone: '+5511999999999',
+            date: '2026-08-01',
+            startTime: '09:00',
+            barberId: 'b1',
+          )).thenAnswer((_) async => const Right(null));
+      return BookingBloc(repository: repository, service: service)
+        ..emit(const BookingState(
+          service: service,
+          selectedBarber: Barber(id: 'b1', name: 'João'),
+          selectedDate: '2026-08-01',
+          selectedSlot: TimeSlot(startTime: '09:00', endTime: '09:30'),
+        ));
+    },
+    act: (bloc) => bloc.add(const BookingConfirmed(clientName: 'João', clientPhone: '+5511999999999')),
+    expect: () => [
+      const BookingState(
+        service: service,
+        selectedBarber: Barber(id: 'b1', name: 'João'),
+        selectedDate: '2026-08-01',
+        selectedSlot: TimeSlot(startTime: '09:00', endTime: '09:30'),
+        isLoading: true,
+      ),
+      const BookingState(
+        service: service,
+        selectedBarber: Barber(id: 'b1', name: 'João'),
+        selectedDate: '2026-08-01',
+        selectedSlot: TimeSlot(startTime: '09:00', endTime: '09:30'),
+        bookingSucceeded: true,
+      ),
     ],
   );
 

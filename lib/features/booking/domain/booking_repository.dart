@@ -6,6 +6,7 @@ abstract class BookingRepository {
   Future<Either<Failure, List<TimeSlot>>> getAvailableSlots({
     required String serviceId,
     required String date,
+    String? barberId,
   });
 
   Future<Either<Failure, void>> bookAppointment({
@@ -14,5 +15,6 @@ abstract class BookingRepository {
     required String clientPhone,
     required String date,
     required String startTime,
+    String? barberId,
   });
 }

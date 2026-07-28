@@ -13,6 +13,7 @@ import 'core/firebase/firebase_auth_gateway.dart';
 import 'core/tenancy/tenant_storage.dart';
 import 'features/appointments/data/appointment_repository_impl.dart';
 import 'features/auth/data/auth_repository_impl.dart';
+import 'features/booking/data/barber_repository_impl.dart';
 import 'features/booking/data/booking_repository_impl.dart';
 import 'features/catalog/data/service_repository_impl.dart';
 import 'features/loyalty/data/loyalty_repository_impl.dart';
@@ -54,6 +55,7 @@ void main() async {
   final tenantRepository = TenantRepositoryImpl(apiClient.dio);
   final serviceRepository = ServiceRepositoryImpl(apiClient.dio);
   final bookingRepository = BookingRepositoryImpl(apiClient.dio);
+  final barberRepository = BarberRepositoryImpl(apiClient.dio);
   final loyaltyRepository = LoyaltyRepositoryImpl(apiClient.dio);
   final appointmentRepository = AppointmentRepositoryImpl(apiClient.dio);
   final notificationsRepository = NotificationsRepositoryImpl(apiClient.dio);
@@ -67,6 +69,7 @@ void main() async {
     tenantRepository: tenantRepository,
     serviceRepository: serviceRepository,
     bookingRepository: bookingRepository,
+    barberRepository: barberRepository,
     loyaltyRepository: loyaltyRepository,
     appointmentRepository: appointmentRepository,
     notificationsRepository: notificationsRepository,
