@@ -125,6 +125,41 @@ class _ActivateSubscriptionGuardState extends State<_ActivateSubscriptionGuard> 
   }
 }
 
+// go_router não serializa `extra`, então um restore de processo (Android
+// mata o app em low-memory) reentra em /loyalty/pix-payment com extra nulo.
+// Sem isso, `state.extra as PixPayment` lança TypeError e derruba o app —
+// mesma classe de bug já corrigida pro booking flow (C8).
+class _PixPaymentGuard extends StatefulWidget {
+  final PixPayment? payment;
+  final Widget Function(PixPayment payment) builder;
+
+  const _PixPaymentGuard({required this.payment, required this.builder});
+
+  @override
+  State<_PixPaymentGuard> createState() => _PixPaymentGuardState();
+}
+
+class _PixPaymentGuardState extends State<_PixPaymentGuard> {
+  @override
+  void initState() {
+    super.initState();
+    if (widget.payment == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) context.go('/loyalty/plans');
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final payment = widget.payment;
+    if (payment == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+    return widget.builder(payment);
+  }
+}
+
 GoRouter buildAppRouter({
   required TokenStorage tokenStorage,
   required TenantStorage tenantStorage,
@@ -279,10 +314,14 @@ GoRouter buildAppRouter({
       GoRoute(
         path: '/loyalty/pix-payment',
         builder: (context, state) {
-          final payment = state.extra as PixPayment;
-          return BlocProvider(
-            create: (_) => PixPaymentBloc(repository: loyaltyRepository, paymentId: payment.paymentId),
-            child: PixPaymentScreen(payment: payment),
+          final extra = state.extra;
+          final payment = extra is PixPayment ? extra : null;
+          return _PixPaymentGuard(
+            payment: payment,
+            builder: (payment) => BlocProvider(
+              create: (_) => PixPaymentBloc(repository: loyaltyRepository, paymentId: payment.paymentId),
+              child: PixPaymentScreen(payment: payment),
+            ),
           );
         },
       ),
