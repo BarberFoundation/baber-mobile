@@ -13,16 +13,20 @@ import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
 import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_screen.dart';
 import 'package:baber_mobile/features/home/presentation/home_state.dart';
+import 'package:baber_mobile/shared/theme/theme_cubit.dart';
+import 'package:baber_mobile/shared/theme/theme_storage.dart';
 
 class MockTokenStorage extends Mock implements TokenStorage {}
 class MockTenantStorage extends Mock implements TenantStorage {}
 class MockAuthRepository extends Mock implements AuthRepository {}
+class MockThemeStorage extends Mock implements ThemeStorage {}
 class MockHomeBloc extends MockBloc<HomeEvent, HomeState> implements HomeBloc {}
 
 void main() {
   late MockTokenStorage tokenStorage;
   late MockTenantStorage tenantStorage;
   late MockAuthRepository authRepository;
+  late MockThemeStorage themeStorage;
   late MockHomeBloc bloc;
 
   setUpAll(() {
@@ -33,10 +37,13 @@ void main() {
     tokenStorage = MockTokenStorage();
     tenantStorage = MockTenantStorage();
     authRepository = MockAuthRepository();
+    themeStorage = MockThemeStorage();
     bloc = MockHomeBloc();
     when(() => tokenStorage.clear()).thenAnswer((_) async {});
     when(() => tenantStorage.clear()).thenAnswer((_) async {});
     when(() => authRepository.signOut()).thenAnswer((_) async {});
+    when(() => themeStorage.readMode()).thenAnswer((_) async => null);
+    when(() => themeStorage.saveMode(any())).thenAnswer((_) async {});
   });
 
   Future<GoRouter> pumpHome(WidgetTester tester) async {
@@ -55,6 +62,7 @@ void main() {
                   authRepository: authRepository,
                 ),
               ),
+              BlocProvider(create: (_) => ThemeCubit(storage: themeStorage)),
             ],
             child: const HomeScreen(),
           ),

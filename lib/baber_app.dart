@@ -14,10 +14,13 @@ import 'features/notifications/domain/notifications_repository.dart';
 import 'features/profile/domain/profile_repository.dart';
 import 'features/tenant_selection/domain/tenant_repository.dart';
 import 'shared/theme/app_theme.dart';
+import 'shared/theme/theme_cubit.dart';
+import 'shared/theme/theme_storage.dart';
 
 class BaberApp extends StatelessWidget {
   final TokenStorage tokenStorage;
   final TenantStorage tenantStorage;
+  final ThemeStorage themeStorage;
   final AuthRepository authRepository;
   final TenantRepository tenantRepository;
   final ServiceRepository serviceRepository;
@@ -32,6 +35,7 @@ class BaberApp extends StatelessWidget {
     super.key,
     required this.tokenStorage,
     required this.tenantStorage,
+    required this.themeStorage,
     required this.authRepository,
     required this.tenantRepository,
     required this.serviceRepository,
@@ -61,16 +65,25 @@ class BaberApp extends StatelessWidget {
     // Provided at the app root — not scoped to a single route — so every
     // screen/bloc that hits a 401 can consistently clear the Firebase/Google
     // session alongside the tokens (see SessionCubit.expireTokens).
-    return BlocProvider(
-      create: (_) => SessionCubit(
-        tokenStorage: tokenStorage,
-        tenantStorage: tenantStorage,
-        authRepository: authRepository,
-      ),
-      child: MaterialApp.router(
-        title: 'Baber',
-        theme: appTheme,
-        routerConfig: router,
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (_) => SessionCubit(
+            tokenStorage: tokenStorage,
+            tenantStorage: tenantStorage,
+            authRepository: authRepository,
+          ),
+        ),
+        BlocProvider(create: (_) => ThemeCubit(storage: themeStorage)),
+      ],
+      child: BlocBuilder<ThemeCubit, ThemeMode>(
+        builder: (context, themeMode) => MaterialApp.router(
+          title: 'Baber',
+          theme: AppTheme.light,
+          darkTheme: AppTheme.dark,
+          themeMode: themeMode,
+          routerConfig: router,
+        ),
       ),
     );
   }

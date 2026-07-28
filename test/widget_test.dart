@@ -14,9 +14,11 @@ import 'package:baber_mobile/features/notifications/domain/notifications_reposit
 import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 import 'package:baber_mobile/features/tenant_selection/domain/tenant.dart';
 import 'package:baber_mobile/features/tenant_selection/domain/tenant_repository.dart';
+import 'package:baber_mobile/shared/theme/theme_storage.dart';
 
 class MockTokenStorage extends Mock implements TokenStorage {}
 class MockTenantStorage extends Mock implements TenantStorage {}
+class MockThemeStorage extends Mock implements ThemeStorage {}
 class MockAuthRepository extends Mock implements AuthRepository {}
 class MockTenantRepository extends Mock implements TenantRepository {}
 class MockServiceRepository extends Mock implements ServiceRepository {}
@@ -32,16 +34,19 @@ void main() {
     final tokenStorage = MockTokenStorage();
     final tenantStorage = MockTenantStorage();
     final tenantRepository = MockTenantRepository();
+    final themeStorage = MockThemeStorage();
     final appLinks = MockAppLinks();
     when(() => tenantStorage.readTenantId()).thenAnswer((_) async => null);
     when(() => tokenStorage.readAccessToken()).thenAnswer((_) async => null);
     when(() => appLinks.getInitialLink()).thenAnswer((_) async => null);
+    when(() => themeStorage.readMode()).thenAnswer((_) async => null);
     // TenantSelectionScreen dispatches LoadTenants on mount.
     when(() => tenantRepository.listTenants()).thenAnswer((_) async => const Right(<Tenant>[]));
 
     await tester.pumpWidget(BaberApp(
       tokenStorage: tokenStorage,
       tenantStorage: tenantStorage,
+      themeStorage: themeStorage,
       authRepository: MockAuthRepository(),
       tenantRepository: tenantRepository,
       serviceRepository: MockServiceRepository(),
