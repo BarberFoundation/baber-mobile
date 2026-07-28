@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/theme/theme_cubit.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/stripe_bar.dart';
 import 'home_bloc.dart';
@@ -47,6 +48,16 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: BarberAppBar(
         title: 'Início',
         actions: [
+          // Foundation-phase UI home for the dark/light toggle — the
+          // redesign's own settings surface (Phase 3a) will replace this
+          // with the spec's pill switch once that screen lands.
+          BlocBuilder<ThemeCubit, ThemeMode>(
+            builder: (context, mode) => IconButton(
+              icon: Icon(mode == ThemeMode.dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
+              tooltip: 'Alternar tema',
+              onPressed: () => context.read<ThemeCubit>().toggle(),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => _confirmLogout(context),

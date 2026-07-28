@@ -20,6 +20,7 @@ import 'features/notifications/data/notifications_repository_impl.dart';
 import 'features/profile/data/profile_repository_impl.dart';
 import 'features/tenant_selection/data/tenant_repository_impl.dart';
 import 'firebase_options.dart';
+import 'shared/theme/theme_storage.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,7 @@ void main() async {
   const storage = FlutterSecureStorage();
   final tokenStorage = TokenStorage(storage);
   final tenantStorage = TenantStorage(storage);
+  final themeStorage = ThemeStorage(storage);
   // API_BASE_URL is the host only; the backend serves everything (except
   // /health) under the global "api" prefix with URI versioning (v1).
   const apiHost = String.fromEnvironment('API_BASE_URL', defaultValue: 'http://localhost:3000');
@@ -60,6 +62,7 @@ void main() async {
   runApp(BaberApp(
     tokenStorage: tokenStorage,
     tenantStorage: tenantStorage,
+    themeStorage: themeStorage,
     authRepository: authRepository,
     tenantRepository: tenantRepository,
     serviceRepository: serviceRepository,
