@@ -8,6 +8,7 @@ import 'package:baber_mobile/features/catalog/presentation/services_bloc.dart';
 import 'package:baber_mobile/features/catalog/presentation/services_event.dart';
 import 'package:baber_mobile/features/catalog/presentation/services_list_screen.dart';
 import 'package:baber_mobile/features/catalog/presentation/services_state.dart';
+import 'package:baber_mobile/shared/widgets/skeleton_loader.dart';
 
 class MockServicesBloc extends MockBloc<ServicesEvent, ServicesState> implements ServicesBloc {}
 
@@ -34,12 +35,13 @@ void main() {
     verify(() => bloc.add(LoadServices())).called(1);
   });
 
-  testWidgets('shows spinner while loading', (tester) async {
+  testWidgets('shows skeleton rows while loading', (tester) async {
     whenListen(bloc, const Stream<ServicesState>.empty(), initialState: const ServicesState.loading());
 
     await tester.pumpWidget(wrap(const ServicesListScreen()));
 
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsNothing);
+    expect(find.byType(ServiceSkeletonRow), findsWidgets);
   });
 
   testWidgets('renders service list with name and formatted price', (tester) async {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
+import '../../../shared/widgets/skeleton_loader.dart';
 import 'services_bloc.dart';
 import 'services_event.dart';
 import 'services_state.dart';
@@ -35,7 +36,12 @@ class _ServicesListScreenState extends State<ServicesListScreen> {
         },
         builder: (context, state) {
           if (state.isLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return ListView.separated(
+              padding: const EdgeInsets.all(20),
+              itemCount: 6,
+              separatorBuilder: (context, index) => const SizedBox(height: 12),
+              itemBuilder: (context, index) => const ServiceSkeletonRow(),
+            );
           }
           final services = state.services ?? [];
           if (services.isEmpty) {
