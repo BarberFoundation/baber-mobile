@@ -51,6 +51,8 @@ void main() {
     expect(find.textContaining('Corte'), findsOneWidget);
     expect(find.textContaining('09:00'), findsOneWidget);
     expect(find.text('Qualquer barbeiro disponível'), findsOneWidget);
+    // 2026-08-01 is a Saturday — shown humanized, not as raw ISO.
+    expect(find.text('Sáb, 01 ago'), findsOneWidget);
   });
 
   testWidgets('shows the chosen barber name in the summary when one was selected', (tester) async {

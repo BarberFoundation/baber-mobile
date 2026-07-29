@@ -225,6 +225,7 @@ GoRouter buildAppRouter({
                   appointmentRepository: appointmentRepository,
                   serviceRepository: serviceRepository,
                   loyaltyRepository: loyaltyRepository,
+                  barberRepository: barberRepository,
                 ),
                 child: const HomeScreen(),
               ),

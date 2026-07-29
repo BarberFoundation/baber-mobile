@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/theme/theme_cubit.dart';
+import '../../../shared/utils/appointment_date.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/dotted_border_box.dart';
 import '../../../shared/widgets/stripe_bar.dart';
@@ -99,7 +100,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 _EmptyAppointmentCard(onTap: () => context.push('/services')),
               const SizedBox(height: 28),
               if (!state.hasActiveSubscription) ...[
-                _SubscribeClubBanner(onTap: () => context.push('/loyalty')),
+                _SubscribeClubBanner(
+                  priceLabel: state.cheapestSubscriptionPriceLabel,
+                  onTap: () => context.push('/loyalty'),
+                ),
                 const SizedBox(height: 20),
               ],
               Text(
@@ -107,47 +111,34 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(letterSpacing: 1.2),
               ),
               const SizedBox(height: 12),
-              Row(
+              GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                mainAxisSpacing: 12,
+                crossAxisSpacing: 12,
+                childAspectRatio: 2.2,
                 children: [
-                  Expanded(
-                    child: _ShortcutTile(
-                      icon: Icons.content_cut,
-                      label: 'Serviços',
-                      onTap: () => context.push('/services'),
-                    ),
+                  _ShortcutTile(
+                    icon: Icons.content_cut,
+                    label: 'Serviços',
+                    onTap: () => context.push('/services'),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ShortcutTile(
-                      icon: Icons.event_outlined,
-                      label: 'Consultas',
-                      onTap: () => context.go('/appointments'),
-                    ),
+                  _ShortcutTile(
+                    icon: Icons.event_outlined,
+                    label: 'Consultas',
+                    onTap: () => context.go('/appointments'),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _ShortcutTile(
-                      icon: Icons.notifications_outlined,
-                      label: 'Notificações',
-                      onTap: () => context.go('/notifications'),
-                    ),
+                  _ShortcutTile(
+                    icon: Icons.notifications_outlined,
+                    label: 'Notificações',
+                    onTap: () => context.go('/notifications'),
                   ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Expanded(
-                    child: _ShortcutTile(
-                      icon: Icons.workspace_premium_outlined,
-                      label: 'Clube',
-                      onTap: () => context.push('/loyalty'),
-                    ),
+                  _ShortcutTile(
+                    icon: Icons.workspace_premium_outlined,
+                    label: 'Clube',
+                    onTap: () => context.push('/loyalty'),
                   ),
-                  const SizedBox(width: 12),
-                  const Expanded(child: SizedBox.shrink()),
-                  const SizedBox(width: 12),
-                  const Expanded(child: SizedBox.shrink()),
                 ],
               ),
             ],
@@ -193,7 +184,10 @@ class _NextAppointmentCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${state.nextAppointment!.date} · ${state.nextAppointment!.startTime}',
+                    [
+                      '${formatAppointmentDate(state.nextAppointment!.date)} · ${state.nextAppointment!.startTime}',
+                      if (state.nextAppointmentBarberName != null) 'com ${state.nextAppointmentBarberName}',
+                    ].join(' · '),
                     style: textTheme.bodyMedium?.copyWith(color: AppColors.steel),
                   ),
                 ],
@@ -248,9 +242,10 @@ class _EmptyAppointmentCard extends StatelessWidget {
 }
 
 class _SubscribeClubBanner extends StatelessWidget {
+  final String? priceLabel;
   final VoidCallback onTap;
 
-  const _SubscribeClubBanner({required this.onTap});
+  const _SubscribeClubBanner({required this.priceLabel, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -271,18 +266,20 @@ class _SubscribeClubBanner extends StatelessWidget {
           ),
           child: Row(
             children: [
-              const Icon(Icons.workspace_premium_outlined, color: AppColors.ink),
+              const Icon(Icons.star_rounded, color: AppColors.ink),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Assine o Clube',
+                      'Assine o Clube Baber',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink),
                     ),
                     Text(
-                      'Benefícios exclusivos todo mês.',
+                      priceLabel == null
+                          ? 'Benefícios exclusivos todo mês.'
+                          : 'Cortes com desconto a partir de $priceLabel',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink),
                     ),
                   ],

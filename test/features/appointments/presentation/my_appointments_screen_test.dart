@@ -45,6 +45,24 @@ void main() {
     verify(() => bloc.add(LoadMyAppointments())).called(1);
   });
 
+  testWidgets('shows a humanized Portuguese date instead of the raw ISO string', (tester) async {
+    // 2026-07-31 is a Friday.
+    const appointment = Appointment(
+      id: 'appt-3', serviceId: 's1', date: '2026-07-31',
+      startTime: '15:30', endTime: '16:00', status: AppointmentStatus.confirmed,
+    );
+    whenListen(
+      bloc,
+      const Stream<MyAppointmentsState>.empty(),
+      initialState: const MyAppointmentsState(appointments: [appointment], serviceNames: {'s1': 'Corte'}),
+    );
+
+    await tester.pumpWidget(wrap(const MyAppointmentsScreen()));
+
+    expect(find.textContaining('Sex, 31 jul · 15:30'), findsOneWidget);
+    expect(find.text('2026-07-31 · 15:30'), findsNothing);
+  });
+
   testWidgets('splits appointments into Próximas and Histórico sections', (tester) async {
     whenListen(
       bloc,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/utils/appointment_date.dart';
 import 'booking_bloc.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
@@ -110,7 +111,11 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
                       const Divider(height: 20),
                       _summaryRow(context, 'Serviço', state.service.name),
                       _summaryRow(context, 'Barbeiro', state.selectedBarber?.name ?? 'Qualquer barbeiro disponível'),
-                      _summaryRow(context, 'Data', state.selectedDate ?? ''),
+                      _summaryRow(
+                        context,
+                        'Data',
+                        state.selectedDate == null ? '' : formatAppointmentDate(state.selectedDate!),
+                      ),
                       _summaryRow(context, 'Horário', slot?.startTime ?? ''),
                       _summaryRow(context, 'Preço', state.service.formattedPrice),
                     ],
