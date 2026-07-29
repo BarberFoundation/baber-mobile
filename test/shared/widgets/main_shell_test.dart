@@ -35,4 +35,11 @@ void main() {
 
     expect(navigationBarColor(tester), AppPalette.light.surface);
   });
+
+  testWidgets('labels the notifications tab "Avisos" per the redesign spec', (tester) async {
+    await tester.pumpWidget(MaterialApp.router(theme: AppTheme.dark, routerConfig: buildRouter()));
+
+    expect(find.text('Avisos'), findsOneWidget);
+    expect(find.text('Notificações'), findsNothing);
+  });
 }

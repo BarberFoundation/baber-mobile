@@ -198,17 +198,34 @@ void main() {
     expect(style?.color, AppColors.cream);
   });
 
-  testWidgets('shortcut grid has no empty placeholder cells', (tester) async {
-    whenListen(bloc, const Stream<HomeState>.empty(), initialState: const HomeState(userName: 'João'));
+  testWidgets('shortcut grid shows Serviços/Consultas/Avisos when there is a next appointment', (tester) async {
+    final appointment = Appointment(
+      id: 'appt-1', serviceId: 's1', date: '2999-01-01',
+      startTime: '09:00', endTime: '09:30', status: AppointmentStatus.confirmed,
+    );
+    whenListen(
+      bloc,
+      const Stream<HomeState>.empty(),
+      initialState: HomeState(userName: 'João', nextAppointment: appointment, nextAppointmentServiceName: 'Corte'),
+    );
 
     await pumpHome(tester);
 
     expect(find.text('Serviços'), findsOneWidget);
     expect(find.text('Consultas'), findsOneWidget);
-    expect(find.text('Notificações'), findsOneWidget);
+    expect(find.text('Avisos'), findsOneWidget);
+    expect(find.text('Clube'), findsNothing);
+  });
+
+  testWidgets('shortcut grid shows Serviços/Clube/Avisos when there is no next appointment', (tester) async {
+    whenListen(bloc, const Stream<HomeState>.empty(), initialState: const HomeState(userName: 'João'));
+
+    await pumpHome(tester);
+
+    expect(find.text('Serviços'), findsOneWidget);
     expect(find.text('Clube'), findsOneWidget);
-    expect(find.byWidgetPredicate((w) => w is SizedBox && w.width == 0.0 && w.height == 0.0 && w.child == null),
-        findsNothing);
+    expect(find.text('Avisos'), findsOneWidget);
+    expect(find.text('Consultas'), findsNothing);
   });
 
   testWidgets('tapping shortcuts navigates to services/appointments/notifications', (tester) async {

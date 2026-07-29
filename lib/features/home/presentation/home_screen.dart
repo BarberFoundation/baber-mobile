@@ -111,33 +111,39 @@ class _HomeScreenState extends State<HomeScreen> {
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(letterSpacing: 1.2),
               ),
               const SizedBox(height: 12),
-              GridView.count(
-                crossAxisCount: 2,
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 2.2,
+              Row(
                 children: [
-                  _ShortcutTile(
-                    icon: Icons.content_cut,
-                    label: 'Serviços',
-                    onTap: () => context.push('/services'),
+                  Expanded(
+                    child: _ShortcutTile(
+                      icon: Icons.content_cut,
+                      label: 'Serviços',
+                      onTap: () => context.push('/services'),
+                    ),
                   ),
-                  _ShortcutTile(
-                    icon: Icons.event_outlined,
-                    label: 'Consultas',
-                    onTap: () => context.go('/appointments'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    // "Consultas" when there's an appointment to link out to;
+                    // "Clube" to promote the club instead when there isn't —
+                    // matches the two ATALHOS variants in the redesign spec.
+                    child: state.nextAppointment != null
+                        ? _ShortcutTile(
+                            icon: Icons.event_outlined,
+                            label: 'Consultas',
+                            onTap: () => context.go('/appointments'),
+                          )
+                        : _ShortcutTile(
+                            icon: Icons.workspace_premium_outlined,
+                            label: 'Clube',
+                            onTap: () => context.push('/loyalty'),
+                          ),
                   ),
-                  _ShortcutTile(
-                    icon: Icons.notifications_outlined,
-                    label: 'Notificações',
-                    onTap: () => context.go('/notifications'),
-                  ),
-                  _ShortcutTile(
-                    icon: Icons.workspace_premium_outlined,
-                    label: 'Clube',
-                    onTap: () => context.push('/loyalty'),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _ShortcutTile(
+                      icon: Icons.notifications_outlined,
+                      label: 'Avisos',
+                      onTap: () => context.go('/notifications'),
+                    ),
                   ),
                 ],
               ),
