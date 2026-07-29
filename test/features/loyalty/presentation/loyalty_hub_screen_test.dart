@@ -80,7 +80,7 @@ void main() {
     await tester.pumpWidget(wrap(const LoyaltyHubScreen()));
 
     expect(find.byType(StampGrid), findsOneWidget);
-    expect(find.text('Faltam 7 selos'), findsOneWidget);
+    expect(find.text('Faltam 7 selos para 1 corte grátis'), findsOneWidget);
   });
 
   testWidgets('shows completion copy and "Resgatar corte grátis" when the card is complete', (tester) async {
@@ -188,9 +188,9 @@ void main() {
 
     expect(find.text('Manter assinatura'), findsOneWidget);
     expect(find.text('Cancelar mesmo assim'), findsOneWidget);
-    expect(find.text('Cortes inclusos no plano'), findsOneWidget);
-    expect(find.text('Desconto em serviços'), findsOneWidget);
-    expect(find.text('Prioridade no agendamento'), findsOneWidget);
+    expect(find.text('2 cortes inclusos por mês'), findsOneWidget);
+    expect(find.text('10% de desconto em produtos'), findsOneWidget);
+    expect(find.text('Prioridade de horário'), findsOneWidget);
   });
 
   testWidgets('tapping "Cancelar mesmo assim" in the sheet dispatches CancelSubscriptionRequested', (tester) async {

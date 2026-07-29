@@ -100,23 +100,60 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
             children: [
               Card(
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(18),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        'RESUMO',
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Container(
+                            width: 52,
+                            height: 52,
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(12),
+                              gradient: const LinearGradient(
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                                colors: [AppColors.brass, AppColors.brassDim],
+                              ),
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  state.selectedDate == null ? '' : formatChipMonth(state.selectedDate!),
+                                  style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700, color: AppColors.ink),
+                                ),
+                                Text(
+                                  state.selectedDate == null ? '' : formatChipDay(state.selectedDate!),
+                                  style: const TextStyle(fontSize: 19, fontWeight: FontWeight.w800, color: AppColors.ink),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '${state.selectedDate == null ? '' : formatWeekdayFull(state.selectedDate!).toUpperCase()} · ${slot?.startTime ?? ''}',
+                                  style: Theme.of(context).textTheme.headlineSmall,
+                                ),
+                                if (state.selectedBarber != null)
+                                  Text(
+                                    'com ${state.selectedBarber!.name}',
+                                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.steel),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                      const Divider(height: 20),
+                      const Divider(height: 24),
                       _summaryRow(context, 'Serviço', state.service.name),
-                      _summaryRow(context, 'Barbeiro', state.selectedBarber?.name ?? 'Qualquer barbeiro disponível'),
-                      _summaryRow(
-                        context,
-                        'Data',
-                        state.selectedDate == null ? '' : formatAppointmentDate(state.selectedDate!),
-                      ),
-                      _summaryRow(context, 'Horário', slot?.startTime ?? ''),
                       _summaryRow(context, 'Preço', state.service.formattedPrice),
                     ],
                   ),

@@ -43,19 +43,20 @@ void main() {
         onBookingSucceeded: () => succeededCalled = true,
       );
 
-  testWidgets('shows service, barber, date and slot summary', (tester) async {
+  testWidgets('shows a ticket header with date chip, weekday/time, service and price', (tester) async {
     whenListen(bloc, const Stream<BookingState>.empty(), initialState: initialState);
 
     await tester.pumpWidget(wrap(buildScreen()));
 
-    expect(find.textContaining('Corte'), findsOneWidget);
-    expect(find.textContaining('09:00'), findsOneWidget);
-    expect(find.text('Qualquer barbeiro disponível'), findsOneWidget);
-    // 2026-08-01 is a Saturday — shown humanized, not as raw ISO.
-    expect(find.text('Sáb, 01 ago'), findsOneWidget);
+    // 2026-08-01 is a Saturday.
+    expect(find.text('AGO'), findsOneWidget);
+    expect(find.text('01'), findsOneWidget);
+    expect(find.text('SÁBADO · 09:00'), findsOneWidget);
+    expect(find.text('Corte'), findsOneWidget);
+    expect(find.textContaining('40'), findsOneWidget);
   });
 
-  testWidgets('shows the chosen barber name in the summary when one was selected', (tester) async {
+  testWidgets('shows "com {barbeiro}" under the ticket header when one was selected', (tester) async {
     whenListen(
       bloc,
       const Stream<BookingState>.empty(),
@@ -69,7 +70,15 @@ void main() {
 
     await tester.pumpWidget(wrap(buildScreen()));
 
-    expect(find.text('Marcos'), findsOneWidget);
+    expect(find.text('com Marcos'), findsOneWidget);
+  });
+
+  testWidgets('omits the "com" line when no barber was selected', (tester) async {
+    whenListen(bloc, const Stream<BookingState>.empty(), initialState: initialState);
+
+    await tester.pumpWidget(wrap(buildScreen()));
+
+    expect(find.textContaining('com '), findsNothing);
   });
 
   testWidgets('pre-fills name and phone fields, tapping Confirmar dispatches BookingConfirmed', (tester) async {

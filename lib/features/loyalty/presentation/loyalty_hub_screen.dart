@@ -30,9 +30,9 @@ class LoyaltyHubScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             for (final benefit in const [
-              'Cortes inclusos no plano',
-              'Desconto em serviços',
-              'Prioridade no agendamento',
+              '2 cortes inclusos por mês',
+              '10% de desconto em produtos',
+              'Prioridade de horário',
             ])
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -200,7 +200,9 @@ class LoyaltyHubScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    isComplete ? 'Cartão completo! Resgate seu corte grátis' : 'Faltam $missing selos',
+                    isComplete
+                        ? 'Cartão completo! Resgate seu corte grátis'
+                        : 'Faltam $missing selos para 1 corte grátis',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: isComplete ? AppColors.brass : AppColors.steel,
                         ),
