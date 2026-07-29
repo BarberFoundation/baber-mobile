@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import '../theme/app_colors.dart';
 import 'stripe_bar.dart';
 
 class MainShell extends StatelessWidget {
@@ -16,7 +15,10 @@ class MainShell extends StatelessWidget {
         children: [
           const StripeBar(height: 3),
           NavigationBar(
-            backgroundColor: AppColors.surface,
+            // Follows the ambient theme's navigationBarTheme (AppTheme.dark/
+            // light both set backgroundColor: palette.surface) instead of a
+            // hardcoded dark surface — this bar used to stay dark even in
+            // light mode.
             selectedIndex: navigationShell.currentIndex,
             onDestinationSelected: (index) => navigationShell.goBranch(
               index,

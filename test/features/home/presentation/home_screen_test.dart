@@ -13,6 +13,8 @@ import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
 import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_screen.dart';
 import 'package:baber_mobile/features/home/presentation/home_state.dart';
+import 'package:baber_mobile/shared/theme/app_colors.dart';
+import 'package:baber_mobile/shared/theme/app_theme.dart';
 import 'package:baber_mobile/shared/theme/theme_cubit.dart';
 import 'package:baber_mobile/shared/theme/theme_storage.dart';
 
@@ -46,7 +48,7 @@ void main() {
     when(() => themeStorage.saveMode(any())).thenAnswer((_) async {});
   });
 
-  Future<GoRouter> pumpHome(WidgetTester tester) async {
+  Future<GoRouter> pumpHome(WidgetTester tester, {ThemeData? theme}) async {
     final router = GoRouter(
       initialLocation: '/home',
       routes: [
@@ -74,7 +76,7 @@ void main() {
         GoRoute(path: '/loyalty', builder: (context, state) => const Scaffold(body: Text('loyalty'))),
       ],
     );
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router));
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router, theme: theme));
     return router;
   }
 
@@ -151,6 +153,23 @@ void main() {
     await pumpHome(tester);
 
     expect(find.text('Assine o Clube'), findsNothing);
+  });
+
+  testWidgets('next appointment service name stays readable (cream) in light theme', (tester) async {
+    final appointment = Appointment(
+      id: 'appt-1', serviceId: 's1', date: '2999-01-01',
+      startTime: '09:00', endTime: '09:30', status: AppointmentStatus.confirmed,
+    );
+    whenListen(
+      bloc,
+      const Stream<HomeState>.empty(),
+      initialState: HomeState(userName: 'João', nextAppointment: appointment, nextAppointmentServiceName: 'Corte'),
+    );
+
+    await pumpHome(tester, theme: AppTheme.light);
+
+    final style = tester.widget<Text>(find.text('Corte')).style;
+    expect(style?.color, AppColors.cream);
   });
 
   testWidgets('tapping shortcuts navigates to services/appointments/notifications', (tester) async {

@@ -187,7 +187,10 @@ class _NextAppointmentCard extends StatelessWidget {
                     style: textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 8),
-                  Text(state.nextAppointmentServiceName ?? '', style: textTheme.headlineSmall),
+                  Text(
+                    state.nextAppointmentServiceName ?? '',
+                    style: textTheme.headlineSmall?.copyWith(color: AppColors.cream),
+                  ),
                   const SizedBox(height: 4),
                   Text(
                     '${state.nextAppointment!.date} · ${state.nextAppointment!.startTime}',
