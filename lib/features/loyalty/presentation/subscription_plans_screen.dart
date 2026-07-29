@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import 'subscription_plans_bloc.dart';
 import 'subscription_plans_event.dart';
@@ -28,9 +29,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
       body: BlocConsumer<SubscriptionPlansBloc, SubscriptionPlansState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            AppToast.show(context, state.errorMessage!);
           }
         },
         builder: (context, state) {

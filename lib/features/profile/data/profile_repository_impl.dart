@@ -18,4 +18,24 @@ class ProfileRepositoryImpl implements ProfileRepository {
       return Left(mapDioError(e));
     }
   }
+
+  @override
+  Future<Either<Failure, AuthUser>> updateProfile({
+    String? name,
+    String? phone,
+    String? email,
+    String? cpf,
+  }) async {
+    try {
+      final response = await _dio.patch('/me', data: {
+        if (name != null) 'name': name,
+        if (phone != null) 'phone': phone,
+        if (email != null) 'email': email,
+        if (cpf != null) 'cpf': cpf,
+      });
+      return Right(AuthUser.fromJson(response.data as Map<String, dynamic>));
+    } on DioException catch (e) {
+      return Left(mapDioError(e));
+    }
+  }
 }

@@ -38,6 +38,7 @@ import '../../features/loyalty/presentation/pix_payment_screen.dart';
 import '../../features/loyalty/presentation/subscription_plans_bloc.dart';
 import '../../features/loyalty/presentation/subscription_plans_screen.dart';
 import '../../features/notifications/domain/notifications_repository.dart';
+import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/notifications/presentation/notifications_bloc.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/profile/domain/profile_repository.dart';
@@ -245,14 +246,18 @@ GoRouter buildAppRouter({
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
-              path: '/notifications',
-              builder: (context, state) => BlocProvider(
-                create: (_) => NotificationsBloc(repository: notificationsRepository),
-                child: const NotificationsScreen(),
-              ),
+              path: '/profile',
+              builder: (context, state) => ProfileScreen(profileRepository: profileRepository),
             ),
           ]),
         ],
+      ),
+      GoRoute(
+        path: '/notifications',
+        builder: (context, state) => BlocProvider(
+          create: (_) => NotificationsBloc(repository: notificationsRepository),
+          child: const NotificationsScreen(),
+        ),
       ),
       GoRoute(
         path: '/services',
@@ -292,11 +297,23 @@ GoRouter buildAppRouter({
                 return snapshot.data!.fold(
                   (_) => BlocProvider(
                     create: (_) => ActivateSubscriptionBloc(repository: loyaltyRepository, tier: tier),
-                    child: ActivateSubscriptionScreen(tier: tier, initialName: '', initialPhone: ''),
+                    child: ActivateSubscriptionScreen(
+                      tier: tier,
+                      initialName: '',
+                      initialPhone: '',
+                      initialEmail: '',
+                      initialCpfCnpj: '',
+                    ),
                   ),
                   (user) => BlocProvider(
                     create: (_) => ActivateSubscriptionBloc(repository: loyaltyRepository, tier: tier),
-                    child: ActivateSubscriptionScreen(tier: tier, initialName: user.name ?? '', initialPhone: user.phone ?? ''),
+                    child: ActivateSubscriptionScreen(
+                      tier: tier,
+                      initialName: user.name ?? '',
+                      initialPhone: user.phone ?? '',
+                      initialEmail: user.email ?? '',
+                      initialCpfCnpj: user.cpf ?? '',
+                    ),
                   ),
                 );
               },

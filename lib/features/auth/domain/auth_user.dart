@@ -4,8 +4,10 @@ class AuthUser extends Equatable {
   final String id;
   final String? name;
   final String? phone;
+  final String? email;
+  final String? cpf;
 
-  const AuthUser({required this.id, required this.name, this.phone});
+  const AuthUser({required this.id, required this.name, this.phone, this.email, this.cpf});
 
   bool get needsName => name == null;
 
@@ -13,10 +15,12 @@ class AuthUser extends Equatable {
         id: json['id'] as String,
         name: json['name'] as String?,
         phone: json['phone'] as String?,
+        email: json['email'] as String?,
+        cpf: json['cpf'] as String?,
       );
 
   @override
-  List<Object?> get props => [id, name, phone];
+  List<Object?> get props => [id, name, phone, email, cpf];
 }
 
 class AuthResult extends Equatable {

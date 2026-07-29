@@ -13,7 +13,7 @@ import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
 import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_screen.dart';
 import 'package:baber_mobile/features/home/presentation/home_state.dart';
-import 'package:baber_mobile/shared/theme/app_colors.dart';
+import 'package:baber_mobile/shared/theme/app_palette.dart';
 import 'package:baber_mobile/shared/theme/app_theme.dart';
 import 'package:baber_mobile/shared/theme/theme_cubit.dart';
 import 'package:baber_mobile/shared/theme/theme_storage.dart';
@@ -76,7 +76,7 @@ void main() {
         GoRoute(path: '/loyalty', builder: (context, state) => const Scaffold(body: Text('loyalty'))),
       ],
     );
-    await tester.pumpWidget(MaterialApp.router(routerConfig: router, theme: theme));
+    await tester.pumpWidget(MaterialApp.router(routerConfig: router, theme: theme ?? AppTheme.dark));
     return router;
   }
 
@@ -169,7 +169,7 @@ void main() {
     expect(find.text('loyalty'), findsOneWidget);
   });
 
-  testWidgets('hides Assine o Clube banner when the user already has a subscription', (tester) async {
+  testWidgets('shows membership copy on the club banner when the user already has a subscription', (tester) async {
     whenListen(
       bloc,
       const Stream<HomeState>.empty(),
@@ -178,10 +178,11 @@ void main() {
 
     await pumpHome(tester);
 
+    expect(find.text('Você é membro do Clube Baber'), findsOneWidget);
     expect(find.text('Assine o Clube Baber'), findsNothing);
   });
 
-  testWidgets('next appointment service name stays readable (cream) in light theme', (tester) async {
+  testWidgets('next appointment service name stays readable in light theme', (tester) async {
     final appointment = Appointment(
       id: 'appt-1', serviceId: 's1', date: '2999-01-01',
       startTime: '09:00', endTime: '09:30', status: AppointmentStatus.confirmed,
@@ -195,37 +196,18 @@ void main() {
     await pumpHome(tester, theme: AppTheme.light);
 
     final style = tester.widget<Text>(find.text('Corte')).style;
-    expect(style?.color, AppColors.cream);
+    expect(style?.color, AppPalette.light.textPrimary);
   });
 
-  testWidgets('shortcut grid shows Serviços/Consultas/Avisos when there is a next appointment', (tester) async {
-    final appointment = Appointment(
-      id: 'appt-1', serviceId: 's1', date: '2999-01-01',
-      startTime: '09:00', endTime: '09:30', status: AppointmentStatus.confirmed,
-    );
-    whenListen(
-      bloc,
-      const Stream<HomeState>.empty(),
-      initialState: HomeState(userName: 'João', nextAppointment: appointment, nextAppointmentServiceName: 'Corte'),
-    );
-
-    await pumpHome(tester);
-
-    expect(find.text('Serviços'), findsOneWidget);
-    expect(find.text('Consultas'), findsOneWidget);
-    expect(find.text('Avisos'), findsOneWidget);
-    expect(find.text('Clube'), findsNothing);
-  });
-
-  testWidgets('shortcut grid shows Serviços/Clube/Avisos when there is no next appointment', (tester) async {
+  testWidgets('shortcut grid always shows Serviços/Consultas/Clube (no Avisos)', (tester) async {
     whenListen(bloc, const Stream<HomeState>.empty(), initialState: const HomeState(userName: 'João'));
 
     await pumpHome(tester);
 
     expect(find.text('Serviços'), findsOneWidget);
+    expect(find.text('Consultas'), findsOneWidget);
     expect(find.text('Clube'), findsOneWidget);
-    expect(find.text('Avisos'), findsOneWidget);
-    expect(find.text('Consultas'), findsNothing);
+    expect(find.text('Avisos'), findsNothing);
   });
 
   testWidgets('tapping shortcuts navigates to services/appointments/notifications', (tester) async {
@@ -238,17 +220,13 @@ void main() {
     expect(find.text('services'), findsOneWidget);
   });
 
-  testWidgets('tapping logout clears storages and navigates to tenant-selection', (tester) async {
+  testWidgets('tapping the notifications bell navigates to notifications', (tester) async {
     whenListen(bloc, const Stream<HomeState>.empty(), initialState: const HomeState(userName: 'João'));
 
     await pumpHome(tester);
-    await tester.tap(find.byIcon(Icons.logout));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Sair'));
+    await tester.tap(find.byIcon(Icons.notifications_outlined));
     await tester.pumpAndSettle();
 
-    verify(() => tokenStorage.clear()).called(1);
-    verify(() => tenantStorage.clear()).called(1);
-    expect(find.text('tenant selection'), findsOneWidget);
+    expect(find.text('notifications'), findsOneWidget);
   });
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/appointment_date.dart';
+import '../../../shared/widgets/app_toast.dart';
 import 'booking_bloc.dart';
 import 'booking_event.dart';
 import 'booking_state.dart';
@@ -82,9 +83,7 @@ class _ConfirmBookingScreenState extends State<ConfirmBookingScreen> {
     return BlocConsumer<BookingBloc, BookingState>(
       listener: (context, state) {
         if (state.errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.errorMessage!)),
-          );
+          AppToast.show(context, state.errorMessage!);
         }
         if (state.bookingSucceeded) {
           widget.onBookingSucceeded();

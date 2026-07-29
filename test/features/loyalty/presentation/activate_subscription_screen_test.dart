@@ -40,6 +40,7 @@ void main() {
             builder: (context, state) => BlocProvider<ActivateSubscriptionBloc>.value(value: bloc, child: child),
           ),
           GoRoute(path: '/loyalty', builder: (context, state) => const Scaffold(body: Text('Hub'))),
+          GoRoute(path: '/home', builder: (context, state) => const Scaffold(body: Text('Home'))),
           GoRoute(path: '/loyalty/pix-payment', builder: (context, state) => const Scaffold(body: Text('Pix Screen'))),
         ]),
       );
@@ -48,7 +49,13 @@ void main() {
     whenListen(bloc, const Stream<ActivateSubscriptionState>.empty(), initialState: const ActivateSubscriptionState());
 
     await tester.pumpWidget(wrap(
-      const ActivateSubscriptionScreen(tier: tier, initialName: 'Fulano', initialPhone: '11999998888'),
+      const ActivateSubscriptionScreen(
+        tier: tier,
+        initialName: 'Fulano',
+        initialPhone: '11999998888',
+        initialEmail: '',
+        initialCpfCnpj: '',
+      ),
     ));
     await tester.enterText(find.widgetWithText(TextFormField, 'CPF ou CNPJ'), '123');
     await tester.tap(find.text('Assinar'));
@@ -62,7 +69,13 @@ void main() {
     whenListen(bloc, const Stream<ActivateSubscriptionState>.empty(), initialState: const ActivateSubscriptionState());
 
     await tester.pumpWidget(wrap(
-      const ActivateSubscriptionScreen(tier: tier, initialName: 'Fulano', initialPhone: '11999998888'),
+      const ActivateSubscriptionScreen(
+        tier: tier,
+        initialName: 'Fulano',
+        initialPhone: '11999998888',
+        initialEmail: '',
+        initialCpfCnpj: '',
+      ),
     ));
     await tester.enterText(find.widgetWithText(TextFormField, 'CPF ou CNPJ'), '11144477735');
     await tester.tap(find.text('Assinar'));
@@ -76,7 +89,7 @@ void main() {
         ))).called(1);
   });
 
-  testWidgets('navigates to /loyalty when the state becomes activated', (tester) async {
+  testWidgets('navigates to /home when the state becomes activated with no pending payment', (tester) async {
     whenListen(
       bloc,
       Stream.fromIterable([const ActivateSubscriptionState(activated: true)]),
@@ -84,11 +97,17 @@ void main() {
     );
 
     await tester.pumpWidget(wrap(
-      const ActivateSubscriptionScreen(tier: tier, initialName: 'Fulano', initialPhone: '11999998888'),
+      const ActivateSubscriptionScreen(
+        tier: tier,
+        initialName: 'Fulano',
+        initialPhone: '11999998888',
+        initialEmail: '',
+        initialCpfCnpj: '',
+      ),
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('Hub'), findsOneWidget);
+    expect(find.text('Home'), findsOneWidget);
   });
 
   testWidgets('pushes /loyalty/pix-payment (keeping the back stack) when activation includes a PIX charge', (tester) async {
@@ -102,7 +121,13 @@ void main() {
     );
 
     await tester.pumpWidget(wrap(
-      const ActivateSubscriptionScreen(tier: tier, initialName: 'Fulano', initialPhone: '11999998888'),
+      const ActivateSubscriptionScreen(
+        tier: tier,
+        initialName: 'Fulano',
+        initialPhone: '11999998888',
+        initialEmail: '',
+        initialCpfCnpj: '',
+      ),
     ));
     await tester.pumpAndSettle();
 

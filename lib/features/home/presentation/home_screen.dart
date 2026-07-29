@@ -3,8 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
-import '../../../shared/theme/theme_cubit.dart';
+import '../../../shared/theme/app_palette.dart';
 import '../../../shared/utils/appointment_date.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/dotted_border_box.dart';
 import '../../../shared/widgets/stripe_bar.dart';
@@ -26,52 +27,23 @@ class _HomeScreenState extends State<HomeScreen> {
     context.read<HomeBloc>().add(LoadHome());
   }
 
-  Future<void> _confirmLogout(BuildContext context) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Sair da conta?'),
-        content: const Text('Você precisará entrar novamente com seu telefone.'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('Cancelar')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('Sair')),
-        ],
-      ),
-    );
-    if (confirmed == true && context.mounted) {
-      await context.read<SessionCubit>().logout();
-      if (context.mounted) context.go('/tenant-selection');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: BarberAppBar(
         title: 'Início',
         actions: [
-          // Foundation-phase UI home for the dark/light toggle — the
-          // redesign's own settings surface (Phase 3a) will replace this
-          // with the spec's pill switch once that screen lands.
-          BlocBuilder<ThemeCubit, ThemeMode>(
-            builder: (context, mode) => IconButton(
-              icon: Icon(mode == ThemeMode.dark ? Icons.dark_mode_outlined : Icons.light_mode_outlined),
-              tooltip: 'Alternar tema',
-              onPressed: () => context.read<ThemeCubit>().toggle(),
-            ),
-          ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () => _confirmLogout(context),
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: 'Avisos',
+            onPressed: () => context.push('/notifications'),
           ),
         ],
       ),
       body: BlocConsumer<HomeBloc, HomeState>(
         listener: (context, state) {
           if (state.sessionExpired) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
-            );
+            AppToast.show(context, 'Sessão expirada. Faça login novamente.');
             // Sessão expirada não apaga o tenant: o usuário volta pro login do
             // mesmo salão. Logout manual continua indo para /tenant-selection.
             context.read<SessionCubit>().expireTokens();
@@ -87,7 +59,7 @@ class _HomeScreenState extends State<HomeScreen> {
             children: [
               Text(
                 'Bem-vindo,',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: context.palette.textSecondary),
               ),
               Text(
                 state.userName ?? '',
@@ -99,13 +71,12 @@ class _HomeScreenState extends State<HomeScreen> {
               else
                 _EmptyAppointmentCard(onTap: () => context.push('/services')),
               const SizedBox(height: 28),
-              if (!state.hasActiveSubscription) ...[
-                _SubscribeClubBanner(
-                  priceLabel: state.cheapestSubscriptionPriceLabel,
-                  onTap: () => context.push('/loyalty'),
-                ),
-                const SizedBox(height: 20),
-              ],
+              _SubscribeClubBanner(
+                isSubscribed: state.hasActiveSubscription,
+                priceLabel: state.cheapestSubscriptionPriceLabel,
+                onTap: () => context.push('/loyalty'),
+              ),
+              const SizedBox(height: 20),
               Text(
                 'ATALHOS',
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(letterSpacing: 1.2),
@@ -122,27 +93,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    // "Consultas" when there's an appointment to link out to;
-                    // "Clube" to promote the club instead when there isn't —
-                    // matches the two ATALHOS variants in the redesign spec.
-                    child: state.nextAppointment != null
-                        ? _ShortcutTile(
-                            icon: Icons.event_outlined,
-                            label: 'Consultas',
-                            onTap: () => context.go('/appointments'),
-                          )
-                        : _ShortcutTile(
-                            icon: Icons.workspace_premium_outlined,
-                            label: 'Clube',
-                            onTap: () => context.push('/loyalty'),
-                          ),
+                    child: _ShortcutTile(
+                      icon: Icons.event_outlined,
+                      label: 'Consultas',
+                      onTap: () => context.go('/appointments'),
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: _ShortcutTile(
-                      icon: Icons.notifications_outlined,
-                      label: 'Avisos',
-                      onTap: () => context.go('/notifications'),
+                      icon: Icons.workspace_premium_outlined,
+                      label: 'Clube',
+                      onTap: () => context.push('/loyalty'),
                     ),
                   ),
                 ],
@@ -163,12 +125,13 @@ class _NextAppointmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
+    final palette = context.palette;
     return ClipRRect(
       borderRadius: BorderRadius.circular(14),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.surface,
-          border: Border.all(color: AppColors.divider),
+          color: palette.surface,
+          border: Border.all(color: palette.divider),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -181,12 +144,12 @@ class _NextAppointmentCard extends StatelessWidget {
                 children: [
                   Text(
                     'PRÓXIMA CONSULTA',
-                    style: textTheme.labelMedium?.copyWith(color: AppColors.brass, letterSpacing: 1.2),
+                    style: textTheme.labelMedium?.copyWith(color: palette.brass, letterSpacing: 1.2),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     state.nextAppointmentServiceName ?? '',
-                    style: textTheme.headlineSmall?.copyWith(color: AppColors.cream),
+                    style: textTheme.headlineSmall?.copyWith(color: palette.textPrimary),
                   ),
                   const SizedBox(height: 4),
                   Text(
@@ -194,7 +157,7 @@ class _NextAppointmentCard extends StatelessWidget {
                       '${formatAppointmentDate(state.nextAppointment!.date)} · ${state.nextAppointment!.startTime}',
                       if (state.nextAppointmentBarberName != null) 'com ${state.nextAppointmentBarberName}',
                     ].join(' · '),
-                    style: textTheme.bodyMedium?.copyWith(color: AppColors.steel),
+                    style: textTheme.bodyMedium?.copyWith(color: palette.textSecondary),
                   ),
                 ],
               ),
@@ -219,11 +182,12 @@ class _EmptyAppointmentCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: DottedBorderBox(
+          color: context.palette.divider,
           child: Padding(
             padding: const EdgeInsets.symmetric(vertical: 28, horizontal: 18),
             child: Column(
               children: [
-                const Icon(Icons.event_available_outlined, color: AppColors.brass, size: 28),
+                Icon(Icons.event_available_outlined, color: context.palette.brass, size: 28),
                 const SizedBox(height: 10),
                 Text(
                   'Nenhuma consulta agendada',
@@ -233,7 +197,7 @@ class _EmptyAppointmentCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Reserve seu próximo corte em poucos toques.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.steel),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: context.palette.textSecondary),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
@@ -248,10 +212,11 @@ class _EmptyAppointmentCard extends StatelessWidget {
 }
 
 class _SubscribeClubBanner extends StatelessWidget {
+  final bool isSubscribed;
   final String? priceLabel;
   final VoidCallback onTap;
 
-  const _SubscribeClubBanner({required this.priceLabel, required this.onTap});
+  const _SubscribeClubBanner({required this.isSubscribed, required this.priceLabel, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -279,13 +244,15 @@ class _SubscribeClubBanner extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Assine o Clube Baber',
+                      isSubscribed ? 'Você é membro do Clube Baber' : 'Assine o Clube Baber',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(color: AppColors.ink),
                     ),
                     Text(
-                      priceLabel == null
-                          ? 'Benefícios exclusivos todo mês.'
-                          : 'Cortes com desconto a partir de $priceLabel',
+                      isSubscribed
+                          ? 'Toque para ver seus benefícios.'
+                          : priceLabel == null
+                              ? 'Benefícios exclusivos todo mês.'
+                              : 'Cortes com desconto a partir de $priceLabel',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.ink),
                     ),
                   ],
@@ -309,8 +276,9 @@ class _ShortcutTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final palette = context.palette;
     return Material(
-      color: AppColors.surface,
+      color: palette.surface,
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -318,17 +286,17 @@ class _ShortcutTile extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: AppColors.divider),
+            border: Border.all(color: palette.divider),
           ),
           padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 8),
           child: Column(
             children: [
-              Icon(icon, color: AppColors.brass, size: 26),
+              Icon(icon, color: palette.brass, size: 26),
               const SizedBox(height: 8),
               Text(
                 label,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: AppColors.cream),
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: palette.textPrimary),
               ),
             ],
           ),

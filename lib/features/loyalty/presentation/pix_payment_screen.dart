@@ -5,6 +5,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../domain/pix_payment.dart';
 import 'pix_payment_bloc.dart';
@@ -34,14 +35,10 @@ class _PixPaymentScreenState extends State<PixPaymentScreen> {
       body: BlocConsumer<PixPaymentBloc, PixPaymentState>(
         listener: (context, state) {
           if (state.status == PixPaymentStatus.paid) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Pagamento confirmado!')),
-            );
+            AppToast.show(context, 'Pagamento confirmado!');
           }
           if (state.status == PixPaymentStatus.sessionExpired) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
-            );
+            AppToast.show(context, 'Sessão expirada. Faça login novamente.');
             context.read<SessionCubit>().expireTokens();
             context.go('/phone');
           }
@@ -69,7 +66,7 @@ class _PixPaymentScreenState extends State<PixPaymentScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => context.go('/loyalty'),
+                  onPressed: () => context.go('/home'),
                   child: const Text('Voltar para o clube'),
                 ),
               ] else if (state.status == PixPaymentStatus.paid) ...[
@@ -82,7 +79,7 @@ class _PixPaymentScreenState extends State<PixPaymentScreen> {
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () => context.go('/loyalty'),
+                  onPressed: () => context.go('/home'),
                   child: const Text('Continuar'),
                 ),
               ] else ...[
@@ -108,9 +105,7 @@ class _PixPaymentScreenState extends State<PixPaymentScreen> {
                 OutlinedButton.icon(
                   onPressed: () {
                     Clipboard.setData(ClipboardData(text: widget.payment.payload));
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Código copiado.')),
-                    );
+                    AppToast.show(context, 'Código copiado.');
                   },
                   icon: const Icon(Icons.copy),
                   label: const Text('Copiar código PIX'),
@@ -125,7 +120,7 @@ class _PixPaymentScreenState extends State<PixPaymentScreen> {
                 ),
                 const SizedBox(height: 20),
                 TextButton(
-                  onPressed: () => context.go('/loyalty'),
+                  onPressed: () => context.go('/home'),
                   child: const Text('Pagar depois'),
                 ),
               ],
