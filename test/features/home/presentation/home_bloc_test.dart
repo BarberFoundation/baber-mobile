@@ -6,6 +6,8 @@ import 'package:baber_mobile/core/error/failure.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment.dart';
 import 'package:baber_mobile/features/appointments/domain/appointment_repository.dart';
 import 'package:baber_mobile/features/auth/domain/auth_user.dart';
+import 'package:baber_mobile/features/booking/domain/barber.dart';
+import 'package:baber_mobile/features/booking/domain/barber_repository.dart';
 import 'package:baber_mobile/features/catalog/domain/service.dart';
 import 'package:baber_mobile/features/catalog/domain/service_repository.dart';
 import 'package:baber_mobile/features/home/presentation/home_bloc.dart';
@@ -13,18 +15,21 @@ import 'package:baber_mobile/features/home/presentation/home_event.dart';
 import 'package:baber_mobile/features/home/presentation/home_state.dart';
 import 'package:baber_mobile/features/loyalty/domain/club_subscription.dart';
 import 'package:baber_mobile/features/loyalty/domain/loyalty_repository.dart';
+import 'package:baber_mobile/features/loyalty/domain/subscription_tier_view.dart';
 import 'package:baber_mobile/features/profile/domain/profile_repository.dart';
 
 class MockProfileRepository extends Mock implements ProfileRepository {}
 class MockAppointmentRepository extends Mock implements AppointmentRepository {}
 class MockServiceRepository extends Mock implements ServiceRepository {}
 class MockLoyaltyRepository extends Mock implements LoyaltyRepository {}
+class MockBarberRepository extends Mock implements BarberRepository {}
 
 void main() {
   late MockProfileRepository profileRepository;
   late MockAppointmentRepository appointmentRepository;
   late MockServiceRepository serviceRepository;
   late MockLoyaltyRepository loyaltyRepository;
+  late MockBarberRepository barberRepository;
 
   const service = Service(id: 's1', name: 'Corte', priceInCents: 4000, durationMinutes: 30);
   final future = Appointment(
@@ -41,6 +46,7 @@ void main() {
         appointmentRepository: appointmentRepository,
         serviceRepository: serviceRepository,
         loyaltyRepository: loyaltyRepository,
+        barberRepository: barberRepository,
       );
 
   setUp(() {
@@ -48,7 +54,10 @@ void main() {
     appointmentRepository = MockAppointmentRepository();
     serviceRepository = MockServiceRepository();
     loyaltyRepository = MockLoyaltyRepository();
+    barberRepository = MockBarberRepository();
     when(() => loyaltyRepository.getMySubscription()).thenAnswer((_) async => const Right(null));
+    when(() => loyaltyRepository.getAvailableTiers()).thenAnswer((_) async => const Right(<SubscriptionTierView>[]));
+    when(() => barberRepository.listBarbers()).thenAnswer((_) async => const Right(<Barber>[]));
   });
 
   blocTest<HomeBloc, HomeState>(
@@ -64,6 +73,36 @@ void main() {
     expect: () => [
       const HomeState(isLoading: true),
       HomeState(userName: 'João', nextAppointment: future, nextAppointmentServiceName: 'Corte'),
+    ],
+  );
+
+  blocTest<HomeBloc, HomeState>(
+    'resolves the barber name for the next appointment',
+    build: () {
+      final withBarber = Appointment(
+        id: 'appt-3', serviceId: 's1', barberId: 'b1', date: '2999-01-01',
+        startTime: '09:00', endTime: '09:30', status: AppointmentStatus.confirmed,
+      );
+      when(() => profileRepository.getMe())
+          .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+55')));
+      when(() => appointmentRepository.listMine()).thenAnswer((_) async => Right([withBarber]));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([service]));
+      when(() => barberRepository.listBarbers())
+          .thenAnswer((_) async => const Right([Barber(id: 'b1', name: 'Diego')]));
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(LoadHome()),
+    expect: () => [
+      const HomeState(isLoading: true),
+      HomeState(
+        userName: 'João',
+        nextAppointment: Appointment(
+          id: 'appt-3', serviceId: 's1', barberId: 'b1', date: '2999-01-01',
+          startTime: '09:00', endTime: '09:30', status: AppointmentStatus.confirmed,
+        ),
+        nextAppointmentServiceName: 'Corte',
+        nextAppointmentBarberName: 'Diego',
+      ),
     ],
   );
 
@@ -136,6 +175,26 @@ void main() {
     expect: () => [
       const HomeState(isLoading: true),
       const HomeState(userName: 'João'),
+    ],
+  );
+
+  blocTest<HomeBloc, HomeState>(
+    'resolves the cheapest subscription tier price for the club banner',
+    build: () {
+      when(() => profileRepository.getMe())
+          .thenAnswer((_) async => const Right(AuthUser(id: 'u1', name: 'João', phone: '+55')));
+      when(() => appointmentRepository.listMine()).thenAnswer((_) async => const Right([]));
+      when(() => serviceRepository.listServices()).thenAnswer((_) async => const Right([]));
+      when(() => loyaltyRepository.getAvailableTiers()).thenAnswer((_) async => const Right([
+            SubscriptionTierView(id: 't1', name: 'Essencial', services: [], monthlyPriceInCents: 7900, discountPercentage: 0),
+            SubscriptionTierView(id: 't2', name: 'Premium', services: [], monthlyPriceInCents: 15900, discountPercentage: 0),
+          ]));
+      return buildBloc();
+    },
+    act: (bloc) => bloc.add(LoadHome()),
+    expect: () => [
+      const HomeState(isLoading: true),
+      const HomeState(userName: 'João', cheapestSubscriptionPriceLabel: 'R\$ 79,00/mês'),
     ],
   );
 

@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/utils/appointment_date.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/status_pill.dart';
 import '../domain/appointment.dart';
@@ -83,7 +85,7 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
                     Text(serviceName, style: Theme.of(context).textTheme.titleMedium),
                     const SizedBox(height: 4),
                     Text(
-                      '${appointment.date} · ${appointment.startTime}',
+                      '${formatAppointmentDate(appointment.date)} · ${appointment.startTime}',
                       style: Theme.of(context).textTheme.bodySmall,
                     ),
                     const SizedBox(height: 8),
@@ -120,17 +122,13 @@ class _MyAppointmentsScreenState extends State<MyAppointmentsScreen> {
       body: BlocConsumer<MyAppointmentsBloc, MyAppointmentsState>(
         listener: (context, state) {
           if (state.sessionExpired) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
-            );
+            AppToast.show(context, 'Sessão expirada. Faça login novamente.');
             context.read<SessionCubit>().expireTokens();
             context.go('/phone');
             return;
           }
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            AppToast.show(context, state.errorMessage!);
           }
         },
         builder: (context, state) {

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../domain/subscription_tier_view.dart';
 import '../../../core/validation/cpf_cnpj_validator.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import 'activate_subscription_bloc.dart';
 import 'activate_subscription_event.dart';
@@ -12,12 +13,16 @@ class ActivateSubscriptionScreen extends StatefulWidget {
   final SubscriptionTierView tier;
   final String initialName;
   final String initialPhone;
+  final String initialEmail;
+  final String initialCpfCnpj;
 
   const ActivateSubscriptionScreen({
     super.key,
     required this.tier,
     required this.initialName,
     required this.initialPhone,
+    required this.initialEmail,
+    required this.initialCpfCnpj,
   });
 
   @override
@@ -35,8 +40,8 @@ class _ActivateSubscriptionScreenState extends State<ActivateSubscriptionScreen>
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.initialName);
-    _cpfCnpjController = TextEditingController();
-    _emailController = TextEditingController();
+    _cpfCnpjController = TextEditingController(text: widget.initialCpfCnpj);
+    _emailController = TextEditingController(text: widget.initialEmail);
     _phoneController = TextEditingController(text: widget.initialPhone);
   }
 
@@ -78,16 +83,14 @@ class _ActivateSubscriptionScreenState extends State<ActivateSubscriptionScreen>
       body: BlocConsumer<ActivateSubscriptionBloc, ActivateSubscriptionState>(
         listener: (context, state) {
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            AppToast.show(context, state.errorMessage!);
           }
           if (state.activated) {
             final payment = state.pixPayment;
             if (payment != null) {
               context.push('/loyalty/pix-payment', extra: payment);
             } else {
-              context.go('/loyalty');
+              context.go('/home');
             }
           }
         },

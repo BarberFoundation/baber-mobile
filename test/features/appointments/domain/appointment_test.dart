@@ -17,6 +17,35 @@ Appointment _appointment({
 }
 
 void main() {
+  group('fromJson', () {
+    test('parses barberId when present', () {
+      final appointment = Appointment.fromJson({
+        'id': 'appt-1',
+        'serviceId': 's1',
+        'barberId': 'b1',
+        'date': '2026-08-01',
+        'startTime': '09:00',
+        'endTime': '09:30',
+        'status': 'CONFIRMED',
+      });
+
+      expect(appointment.barberId, 'b1');
+    });
+
+    test('barberId is null when absent (no barber assigned)', () {
+      final appointment = Appointment.fromJson({
+        'id': 'appt-1',
+        'serviceId': 's1',
+        'date': '2026-08-01',
+        'startTime': '09:00',
+        'endTime': '09:30',
+        'status': 'CONFIRMED',
+      });
+
+      expect(appointment.barberId, isNull);
+    });
+  });
+
   group('startDateTime', () {
     test('parses date and startTime', () {
       expect(_appointment().startDateTime, DateTime(2999, 1, 1, 9));

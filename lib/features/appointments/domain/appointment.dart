@@ -20,6 +20,7 @@ AppointmentStatus appointmentStatusFromString(String value) {
 class Appointment extends Equatable {
   final String id;
   final String serviceId;
+  final String? barberId;
   final String date;
   final String startTime;
   final String endTime;
@@ -28,6 +29,7 @@ class Appointment extends Equatable {
   const Appointment({
     required this.id,
     required this.serviceId,
+    this.barberId,
     required this.date,
     required this.startTime,
     required this.endTime,
@@ -37,6 +39,7 @@ class Appointment extends Equatable {
   factory Appointment.fromJson(Map<String, dynamic> json) => Appointment(
         id: json['id'] as String,
         serviceId: json['serviceId'] as String,
+        barberId: json['barberId'] as String?,
         date: json['date'] as String,
         startTime: json['startTime'] as String,
         endTime: json['endTime'] as String,
@@ -58,5 +61,5 @@ class Appointment extends Equatable {
   }
 
   @override
-  List<Object?> get props => [id, serviceId, date, startTime, endTime, status];
+  List<Object?> get props => [id, serviceId, barberId, date, startTime, endTime, status];
 }

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../../../shared/widgets/ring_confetti_overlay.dart';
 import '../../../shared/widgets/stamp_grid.dart';
@@ -30,9 +31,9 @@ class LoyaltyHubScreen extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             for (final benefit in const [
-              'Cortes inclusos no plano',
-              'Desconto em serviços',
-              'Prioridade no agendamento',
+              '2 cortes inclusos por mês',
+              '10% de desconto em produtos',
+              'Prioridade de horário',
             ])
               Padding(
                 padding: const EdgeInsets.only(bottom: 8),
@@ -92,14 +93,10 @@ class LoyaltyHubScreen extends StatelessWidget {
       body: BlocConsumer<LoyaltyBloc, LoyaltyState>(
         listener: (context, state) {
           if (state.actionErrorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.actionErrorMessage!)),
-            );
+            AppToast.show(context, state.actionErrorMessage!);
           }
           if (state.sessionExpired) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
-            );
+            AppToast.show(context, 'Sessão expirada. Faça login novamente.');
             context.read<SessionCubit>().expireTokens();
             context.go('/phone');
           }
@@ -200,7 +197,9 @@ class LoyaltyHubScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    isComplete ? 'Cartão completo! Resgate seu corte grátis' : 'Faltam $missing selos',
+                    isComplete
+                        ? 'Cartão completo! Resgate seu corte grátis'
+                        : 'Faltam $missing selos para 1 corte grátis',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: isComplete ? AppColors.brass : AppColors.steel,
                         ),

@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../../core/auth/session_cubit.dart';
 import '../../../shared/theme/app_colors.dart';
 import '../../../shared/utils/relative_time.dart';
+import '../../../shared/widgets/app_toast.dart';
 import '../../../shared/widgets/barber_app_bar.dart';
 import '../domain/notification_item.dart';
 import 'notifications_bloc.dart';
@@ -53,17 +54,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       body: BlocConsumer<NotificationsBloc, NotificationsState>(
         listener: (context, state) {
           if (state.sessionExpired) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Sessão expirada. Faça login novamente.')),
-            );
+            AppToast.show(context, 'Sessão expirada. Faça login novamente.');
             context.read<SessionCubit>().expireTokens();
             context.go('/phone');
             return;
           }
           if (state.errorMessage != null) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(state.errorMessage!)),
-            );
+            AppToast.show(context, state.errorMessage!);
           }
         },
         builder: (context, state) {
